@@ -8,7 +8,7 @@ export function TechTag({ children, className }) {
     <span
       className={cn(
         badgeVariants({ variant: "secondary" }),
-        "rounded-md font-normal text-neutral-600",
+        "rounded-md font-normal text-muted-foreground",
         className
       )}
     >

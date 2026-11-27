@@ -17,14 +17,14 @@ function ProfileHeader({ developer, postCount, isOwnProfile }) {
   ];
 
   return (
-    <Card className="gap-0 py-0 shadow-xs ring-neutral-200">
-      <div className="h-24 bg-neutral-100 sm:h-28" />
+    <Card className="gap-0 py-0 shadow-xs">
+      <div className="h-24 bg-muted sm:h-28" />
       <div className="px-4 pb-5 sm:px-6">
         <div className="-mt-10 flex items-end justify-between gap-3">
           <UserAvatar
             user={developer}
             size="lg"
-            className="size-20 ring-4 ring-white [&_[data-slot=avatar-fallback]]:text-2xl"
+            className="size-20 ring-4 ring-card [&_[data-slot=avatar-fallback]]:text-2xl"
           />
           {isOwnProfile ? (
             <Button
@@ -42,15 +42,15 @@ function ProfileHeader({ developer, postCount, isOwnProfile }) {
           )}
         </div>
 
-        <h1 className="mt-3 text-xl font-semibold tracking-tight text-neutral-900">
+        <h1 className="mt-3 text-xl font-semibold tracking-tight text-foreground">
           {developer.name}
         </h1>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted-foreground">
           @{developer.username} · {developer.role}
         </p>
-        <p className="mt-3 text-[15px] leading-relaxed text-neutral-700">{developer.bio}</p>
+        <p className="mt-3 text-[15px] leading-relaxed text-foreground">{developer.bio}</p>
 
-        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-500">
+        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
           <li className="flex items-center gap-1.5">
             <MapPin className="size-4" aria-hidden="true" />
             {developer.location}
@@ -64,8 +64,8 @@ function ProfileHeader({ developer, postCount, isOwnProfile }) {
         <dl className="mt-4 flex gap-6">
           {stats.map((stat) => (
             <div key={stat.label} className="flex flex-col-reverse">
-              <dt className="text-xs text-neutral-500">{stat.label}</dt>
-              <dd className="font-semibold text-neutral-900 tabular-nums">
+              <dt className="text-xs text-muted-foreground">{stat.label}</dt>
+              <dd className="font-semibold text-foreground tabular-nums">
                 {formatCount(stat.value)}
               </dd>
             </div>
@@ -93,7 +93,7 @@ export function DeveloperProfilePage({ username }) {
         isOwnProfile={isOwnProfile}
       />
 
-      <Card className="gap-3 shadow-xs ring-neutral-200">
+      <Card className="gap-3 shadow-xs">
         <CardHeader>
           <CardTitle className="font-semibold">Skills</CardTitle>
         </CardHeader>
@@ -109,7 +109,7 @@ export function DeveloperProfilePage({ username }) {
       </Card>
 
       <section aria-labelledby="profile-posts" className="space-y-3">
-        <h2 id="profile-posts" className="px-1 font-semibold text-neutral-900">
+        <h2 id="profile-posts" className="px-1 font-semibold text-foreground">
           Posts
         </h2>
         {posts.length > 0 ? (

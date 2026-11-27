@@ -7,14 +7,14 @@ import { communityStats, trendingTechnologies } from "@/data/community";
 import { getSuggestedDevelopers } from "@/lib/developers";
 import { paths } from "@/lib/paths";
 
-const cardClass = "gap-3 shadow-xs ring-neutral-200";
+const cardClass = "gap-3 shadow-xs";
 
 function TrendingCard() {
   return (
     <Card className={cardClass}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-semibold">
-          <TrendingUp className="size-4 text-blue-600" aria-hidden="true" />
+          <TrendingUp className="size-4 text-brand-soft-foreground" aria-hidden="true" />
           Trending technologies
         </CardTitle>
       </CardHeader>
@@ -23,16 +23,16 @@ function TrendingCard() {
           {trendingTechnologies.map((tech, index) => (
             <li
               key={tech.name}
-              className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-neutral-50"
+              className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted"
             >
-              <span className="w-4 text-xs font-medium text-neutral-400 tabular-nums">
+              <span className="w-4 text-xs font-medium text-muted-foreground tabular-nums">
                 {index + 1}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-neutral-900">{tech.name}</p>
-                <p className="text-xs text-neutral-500">{tech.posts}</p>
+                <p className="truncate font-medium text-foreground">{tech.name}</p>
+                <p className="text-xs text-muted-foreground">{tech.posts}</p>
               </div>
-              <span className="text-xs font-medium text-emerald-600 tabular-nums">
+              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 tabular-nums">
                 {tech.change}
               </span>
             </li>
@@ -57,11 +57,11 @@ function SuggestedDevelopersCard() {
               <div className="min-w-0 flex-1">
                 <Link
                   href={paths.developer(dev.username)}
-                  className="block truncate font-medium text-neutral-900 hover:underline focus-visible:underline focus-visible:outline-none"
+                  className="block truncate font-medium text-foreground hover:underline focus-visible:underline focus-visible:outline-none"
                 >
                   {dev.name}
                 </Link>
-                <p className="truncate text-xs text-neutral-500">{dev.role}</p>
+                <p className="truncate text-xs text-muted-foreground">{dev.role}</p>
               </div>
               <FollowButton name={dev.name} />
             </li>
@@ -83,10 +83,10 @@ function CommunityStatsCard() {
           {communityStats.map((stat) => (
             <div
               key={stat.label}
-              className="flex flex-col-reverse rounded-lg bg-neutral-50 px-3 py-2.5"
+              className="flex flex-col-reverse rounded-lg bg-muted/50 px-3 py-2.5"
             >
-              <dt className="text-xs text-neutral-500">{stat.label}</dt>
-              <dd className="text-lg font-semibold text-neutral-900 tabular-nums">
+              <dt className="text-xs text-muted-foreground">{stat.label}</dt>
+              <dd className="text-lg font-semibold text-foreground tabular-nums">
                 {stat.value}
               </dd>
             </div>

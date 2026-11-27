@@ -18,7 +18,7 @@ export function ExplorePage() {
         description="Discover developers, technologies and the conversations people are having."
       />
 
-      <Card className="gap-3 shadow-xs ring-neutral-200">
+      <Card className="gap-3 shadow-xs">
         <CardHeader>
           <CardTitle className="font-semibold">Trending topics</CardTitle>
         </CardHeader>
@@ -28,7 +28,7 @@ export function ExplorePage() {
               <li key={tech.name}>
                 <TechTag className="h-7 px-2.5 text-[13px]">
                   {tech.name}
-                  <span className="text-neutral-400">· {tech.posts}</span>
+                  <span className="text-muted-foreground">· {tech.posts}</span>
                 </TechTag>
               </li>
             ))}
@@ -37,7 +37,7 @@ export function ExplorePage() {
       </Card>
 
       <section aria-labelledby="explore-developers" className="space-y-3">
-        <h2 id="explore-developers" className="px-1 font-semibold text-neutral-900">
+        <h2 id="explore-developers" className="px-1 font-semibold text-foreground">
           Developers to follow
         </h2>
         <ul className="grid gap-3 sm:grid-cols-2">
@@ -52,7 +52,7 @@ export function ExplorePage() {
       <section aria-labelledby="explore-popular" className="space-y-3">
         <h2
           id="explore-popular"
-          className="flex items-center gap-2 px-1 font-semibold text-neutral-900"
+          className="flex items-center gap-2 px-1 font-semibold text-foreground"
         >
           <Flame className="size-4 text-orange-500" aria-hidden="true" />
           Popular this week

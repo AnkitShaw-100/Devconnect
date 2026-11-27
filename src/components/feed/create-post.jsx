@@ -13,14 +13,14 @@ const attachments = [
 // Composer UI only: publishing needs the API planned for a later milestone.
 export function CreatePost({ user }) {
   return (
-    <Card className="gap-0 py-0 shadow-xs ring-neutral-200">
+    <Card className="gap-0 py-0 shadow-xs">
       <div className="flex items-center gap-3 px-4 pt-4 sm:px-5">
         <UserAvatar user={user} size="lg" />
         <Input
           name="post"
           placeholder="Share what you're building, learning or debugging…"
           aria-label="Write a post"
-          className="h-10 rounded-full border-neutral-200 bg-neutral-50 px-4 shadow-none"
+          className="h-10 rounded-full border-border bg-muted/50 px-4 shadow-none"
         />
       </div>
       <div className="flex items-center gap-1 py-2.5 pr-4 pl-[3.75rem] sm:pr-5 sm:pl-[4.25rem]">
@@ -29,7 +29,7 @@ export function CreatePost({ user }) {
             key={label}
             variant="ghost"
             size="sm"
-            className="text-neutral-600"
+            className="text-muted-foreground"
             aria-label={label}
           >
             <Icon />

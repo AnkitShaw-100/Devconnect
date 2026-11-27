@@ -8,30 +8,30 @@ import { paths } from "@/lib/paths";
 
 function ProfileSummary() {
   return (
-    <Card className="gap-0 py-0 shadow-xs ring-neutral-200">
-      <div className="h-14 bg-neutral-100" />
+    <Card className="gap-0 py-0 shadow-xs">
+      <div className="h-14 bg-muted" />
       <div className="-mt-7 flex flex-col items-center px-4 pb-4 text-center">
         <UserAvatar
           user={currentUser}
           size="lg"
-          className="size-14 ring-4 ring-white [&_[data-slot=avatar-fallback]]:text-base"
+          className="size-14 ring-4 ring-card [&_[data-slot=avatar-fallback]]:text-base"
         />
         <Link
           href={paths.profile}
-          className="mt-2 font-semibold text-neutral-900 hover:underline focus-visible:underline focus-visible:outline-none"
+          className="mt-2 font-semibold text-foreground hover:underline focus-visible:underline focus-visible:outline-none"
         >
           {currentUser.name}
         </Link>
-        <p className="text-xs text-neutral-500">{currentUser.role}</p>
+        <p className="text-xs text-muted-foreground">{currentUser.role}</p>
       </div>
-      <dl className="grid grid-cols-2 border-t border-neutral-100 text-center">
+      <dl className="grid grid-cols-2 border-t border-border text-center">
         <div className="py-3">
-          <dt className="text-xs text-neutral-500">Followers</dt>
-          <dd className="text-sm font-semibold text-neutral-900">1,204</dd>
+          <dt className="text-xs text-muted-foreground">Followers</dt>
+          <dd className="text-sm font-semibold text-foreground">1,204</dd>
         </div>
-        <div className="border-l border-neutral-100 py-3">
-          <dt className="text-xs text-neutral-500">Posts</dt>
-          <dd className="text-sm font-semibold text-neutral-900">86</dd>
+        <div className="border-l border-border py-3">
+          <dt className="text-xs text-muted-foreground">Posts</dt>
+          <dd className="text-sm font-semibold text-foreground">86</dd>
         </div>
       </dl>
     </Card>

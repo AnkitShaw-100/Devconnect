@@ -14,10 +14,10 @@ function NavLinkView({ href, active, onClick, className, children }) {
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-        "outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+        "outline-none focus-visible:ring-3 focus-visible:ring-ring",
         active
-          ? "bg-blue-50 text-blue-700"
-          : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900",
+          ? "bg-brand-soft text-brand-soft-foreground"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground",
         className
       )}
     >

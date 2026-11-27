@@ -12,12 +12,12 @@ export function PostCard({ post }) {
   const { author } = post;
 
   return (
-    <Card className="gap-0 py-0 shadow-xs ring-neutral-200">
+    <Card className="gap-0 py-0 shadow-xs">
       <article>
         <header className="flex items-start gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
           <Link
             href={paths.developer(author.username)}
-            className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring"
             tabIndex={-1}
             aria-hidden="true"
           >
@@ -26,21 +26,21 @@ export function PostCard({ post }) {
           <div className="min-w-0 flex-1">
             <Link
               href={paths.developer(author.username)}
-              className="block truncate font-semibold text-neutral-900 hover:underline focus-visible:underline focus-visible:outline-none"
+              className="block truncate font-semibold text-foreground hover:underline focus-visible:underline focus-visible:outline-none"
             >
               {author.name}
             </Link>
-            <p className="truncate text-xs text-neutral-500">
+            <p className="truncate text-xs text-muted-foreground">
               @{author.username} · {author.role}
             </p>
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-muted-foreground">
               <time>{post.timestamp}</time>
             </p>
           </div>
           <Button
             variant="ghost"
             size="icon-sm"
-            className="text-neutral-400"
+            className="text-muted-foreground"
             aria-label="More options"
           >
             <Ellipsis />
@@ -48,7 +48,7 @@ export function PostCard({ post }) {
         </header>
 
         <div className="px-4 pt-3 sm:px-5">
-          <p className="text-[15px] leading-relaxed text-neutral-800">{post.content}</p>
+          <p className="text-[15px] leading-relaxed text-foreground">{post.content}</p>
           <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Technologies">
             {post.tags.map((tag) => (
               <li key={tag}>
@@ -58,18 +58,18 @@ export function PostCard({ post }) {
           </ul>
         </div>
 
-        <footer className="mt-4 flex items-center gap-1 border-t border-neutral-100 px-2 py-1.5 sm:px-3">
+        <footer className="mt-4 flex items-center gap-1 border-t border-border px-2 py-1.5 sm:px-3">
           <LikeButton initialLikes={post.likes} initialLiked={post.likedByMe} />
           <Button
             variant="ghost"
             size="sm"
-            className="text-neutral-600"
+            className="text-muted-foreground"
             aria-label={`${post.comments} comments`}
           >
             <MessageCircle />
             <span className="tabular-nums">{formatCount(post.comments)}</span>
           </Button>
-          <Button variant="ghost" size="sm" className="ml-auto text-neutral-600">
+          <Button variant="ghost" size="sm" className="ml-auto text-muted-foreground">
             <Share2 />
             Share
           </Button>

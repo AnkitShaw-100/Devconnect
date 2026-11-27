@@ -23,8 +23,8 @@ export function LikeButton({ initialLikes, initialLiked = false }) {
       aria-pressed={liked}
       aria-label={liked ? "Unlike post" : "Like post"}
       className={cn(
-        "text-neutral-600",
-        liked && "text-rose-600 hover:text-rose-600"
+        "text-muted-foreground",
+        liked && "text-rose-600 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-400"
       )}
     >
       <Heart className={cn(liked && "fill-current")} />

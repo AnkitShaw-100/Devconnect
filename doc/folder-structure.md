@@ -1,13 +1,14 @@
 # DevConnect – `src` Folder Structure
 
-`src` folder ke andar kya hai aur kaunsi file kya karti hai, iska simple guide. (Updated: React Router hata ke Next.js App Router pe migrate karne ke baad.)
+`src` folder ke andar kya hai aur kaunsi file kya karti hai, iska simple guide. (Updated: Next.js App Router, dark theme aur single-letter avatars ke baad.)
 
 ## Overall structure
 
 ```
 src/
 ├── app/                     → Har folder = ek URL (Next.js file-based routing)
-│   ├── layout.js            → Poore app ka frame: navbar + sidebars
+│   ├── layout.js            → Poore app ka frame: navbar + sidebars, dark theme on
+│   ├── globals.css          → Saare theme colours (ek hi jagah)
 │   ├── page.js              → /
 │   ├── explore/page.js      → /explore
 │   ├── bookmarks/page.js    → /bookmarks
@@ -25,13 +26,13 @@ src/
 │   ├── shared/              → Baar-baar use hone wale chhote components
 │   └── ui/                  → shadcn ke components
 ├── data/                    → Dummy data (fake posts, developers)
-└── lib/                     → Helpers: data padhna, URLs, active link check
+└── lib/                     → Helpers: data padhna, URLs, active link, avatar letter
 
 tests/                       → Unit tests (project root mein)
 e2e/                         → Browser tests, Playwright (project root mein)
 ```
 
-Ek line mein: **`app` ka folder structure hi URL hai, `data` mein content hai, `lib` usse padhta hai, `components` mein design hai.**
+Ek line mein: **`app` ka folder structure hi URL hai, `data` mein content hai, `lib` usse padhta hai, `components` mein design hai, `globals.css` mein rang hain.**
 
 ---
 
@@ -56,6 +57,7 @@ Ek line mein: **`app` ka folder structure hi URL hai, `data` mein content hai, `
 
 - Har page isi ke andar dikhta hai. Isme `<AppShell>` hai, yaani navbar, left sidebar aur right sidebar.
 - Page badalne pe **layout dobara nahi banta**, sirf beech wala content (`children`) badalta hai. Isliye sidebar ka Follow state navigation ke baad bhi bana rehta hai.
+- `<html>` pe `dark` class lagi hai, isliye **poora app by default dark theme** mein hai. `scheme-dark` se browser ke scrollbars aur inputs bhi dark ho jaate hain. Abhi koi theme toggle nahi hai.
 
 ### `app/page.js`, `explore/page.js`, `bookmarks/page.js`, `profile/page.js`
 
@@ -81,9 +83,9 @@ Page banate waqt error aaye toh beech wale column mein "Something went wrong" ca
 
 > Dhyan do: `error.js` layout ke andar ke errors pakadta hai, **layout ke khud ke** errors nahi. Uske liye Next.js mein alag `global-error.js` hota hai (abhi nahi banaya).
 
-### `app/globals.css`
+### `app/globals.css` 🎨 (saare rang yahin)
 
-Global styling: Tailwind, shadcn theme colors aur font.
+Global styling: Tailwind, theme colours aur font. Rangon ke liye neeche wala section **"Theme colours kahan rehte hain"** dekho.
 
 ---
 
@@ -145,7 +147,7 @@ Global styling: Tailwind, shadcn theme colors aur font.
 | `page-header.jsx` | Har page ke upar title + chhota description |
 | `page-skeleton.jsx` | Loading ke time beech wale column ka skeleton (`app/loading.js` use karta hai) |
 | `empty-state.jsx` | Icon + message wala card, jab dikhane ko kuch na ho (no bookmarks, no posts, 404, error) |
-| `user-avatar.jsx` | Gol avatar jisme initials hote hain (jaise "PR") |
+| `user-avatar.jsx` | Gol avatar jisme naam ka **pehla letter** hota hai (jaise "Priya Raman" → "P"). Letter `lib/avatar.js` se aata hai. |
 | `tech-tag.jsx` | `#React`, `#DevOps` jaise chhote tags |
 
 ---
@@ -160,7 +162,7 @@ Button, Card, Avatar, Badge, Input, Sheet, Separator, Dialog, Dropdown Menu, Ske
 
 | File | Kya hai |
 |---|---|
-| `developers.js` | Saare 7 developers: naam, username, role, bio, location, skills, followers. **Baaki sab files developers ko username se refer karti hain.** |
+| `developers.js` | Saare 7 developers: naam, username, role, bio, location, skills, followers, avatar ka rang (light + `dark:` shade). Initials ab store nahi hote, avatar letter `name` se banta hai. **Baaki sab files developers ko username se refer karti hain.** |
 | `posts.js` | 3 sample posts. Har post mein bas `authorUsername` hai, poora author nahi. |
 | `bookmarks.js` | Kaunse posts bookmark hain (post ids) |
 | `community.js` | Trending tech, suggested developers ke usernames, community stats |
@@ -175,6 +177,7 @@ Button, Card, Avatar, Badge, Input, Sheet, Separator, Dialog, Dropdown Menu, Ske
 |---|---|
 | `developers.js` | Data padhne wale functions: `getDeveloper`, `getFeedPosts`, `getPostsByDeveloper`, `getBookmarkedPosts`, `getPopularPosts`, aur `findDeveloperByParam`, jo URL ke username ko validate karta hai (sirf letters, numbers, `.`, `_`, `-`; galat encoding reject). Database aane pe sirf ye file badlegi. |
 | `paths.js` | Saare URLs ek jagah (`paths.developer("priyacodes")` → `/developers/priyacodes`), aur `isActivePath`, jo batata hai kaunsa nav link active hai |
+| `avatar.js` | `getAvatarLetter(name)`: first name ka pehla letter, capital mein. Details neeche wale section mein. |
 | `format.js` | Numbers ko short karta hai, jaise `1200` → `1.2K` |
 | `utils.js` | CSS classes jodne wala `cn` function |
 
@@ -185,6 +188,8 @@ Button, Card, Avatar, Badge, Input, Sheet, Separator, Dialog, Dropdown Menu, Ske
 | File | Kya check karta hai |
 |---|---|
 | `routing.test.mjs` | Har URL ke liye `page.js` file hai; galat usernames reject hote hain; har developer ka username valid hai; active link ka logic sahi hai |
+| `avatar.test.mjs` | Avatar letter: normal naam, single naam, extra spaces, lowercase, khaali input, `ß`, alag accent, emoji; data mein `initials` nahi bacha |
+| `theme.test.mjs` | `globals.css` aur Tailwind ke asli colour values se **WCAG contrast** calculate karta hai: text, tags, blue accent, har component ka focus ring, like/trend colours aur har avatar |
 | `developers.test.mjs` | Data helpers sahi posts, bookmarks aur developers dete hain |
 
 Chalane ke liye: `npm test` (Node ka built-in test runner, koi extra package nahi).
@@ -201,8 +206,71 @@ Ye tests asli Chromium browser mein app kholte hain aur user ki tarah click kart
 | `not-found.spec.mjs` | Galat URLs pe 404 page + `noindex`, aur 404 page se wapas app mein jaana |
 | `interactions.spec.mjs` | Like button count badhata/ghatata hai, Follow toggle hota hai, Post button disabled hai |
 | `mobile.spec.mjs` | Phone size pe sidebars chhupte hain, ☰ menu khulta hai, link click pe page badalta hai aur menu band hota hai |
+| `theme.spec.mjs` | Dark theme on hai, background aur cards theme tokens se aate hain, active link brand colour mein hai, har avatar mein sirf ek letter hai |
 
 Chalane ke liye: `npm run test:e2e`
+
+---
+
+## 🎨 Theme colours kahan rehte hain
+
+**Saare rang ek hi jagah hain: `src/app/globals.css`.** Components mein ab `bg-white`, `text-neutral-900`, `bg-blue-50` jaise fixed rang nahi likhe; wo **theme tokens** use karte hain.
+
+```
+globals.css
+├── :root { ... }     → Light theme ke rang (abhi use nahi ho rahe, future toggle ke liye)
+├── .dark { ... }     → Dark theme ke rang (shadcn ka palette) ← abhi yahi chalta hai
+└── @theme inline     → In variables ko Tailwind classes banata hai (bg-card, text-foreground...)
+```
+
+`layout.js` mein `<html className="dark">` hai, isliye `.dark` wale rang lagte hain.
+
+| Token (Tailwind class) | Kahan use hota hai |
+|---|---|
+| `bg-background` | Page ka background, navbar |
+| `bg-card` | Cards (posts, sidebar boxes) |
+| `bg-muted` | Hover, search box, cover band, stat tiles, skeleton |
+| `text-foreground` | Main text, headings, naam |
+| `text-muted-foreground` | Chhota/secondary text: @username, time, labels |
+| `border-border` | Lines aur borders |
+| `ring-ring` | Keyboard focus ring |
+| `bg-brand` / `text-brand-foreground` | Blue logo box (DevConnect ka apna token) |
+| `bg-brand-soft` / `text-brand-soft-foreground` | Active nav link, blue icons, empty-state icon (DevConnect ka apna token) |
+
+**Brand tokens kyun banaye?** Shadcn ke palette mein blue accent nahi hai. Isliye `globals.css` mein 3 chhote tokens add kiye (`--brand`, `--brand-soft`, `--brand-soft-foreground`), light aur dark dono ke liye. `.dark` ke shadcn wale rang waise hi hain.
+
+**Kuch rang abhi bhi `dark:` ke saath likhe hain**, kyunki wo ek-ek jagah hi use hote hain:
+- Avatar ke rang (`data/developers.js`): light mein `bg-rose-100 text-rose-700`, dark mein `dark:bg-rose-500/20 dark:text-rose-300`
+- Like ka laal dil (`dark:text-rose-400`) aur trending ka hara % (`dark:text-emerald-400`)
+
+**Contrast check:** `tests/theme.test.mjs` asli colour values se WCAG ratio nikalta hai. Text ke liye kam se kam 4.5:1, icons aur focus ring ke liye 3:1. Isi test ne dikhaya ki `ring-ring/50` (aadha transparent ring) dark mein sirf ~1.9–2.3:1 deta hai, isliye ab **saare** components, shadcn ke Button, Input aur Badge bhi, poora `ring-ring` use karte hain. Test har component file ka focus ring padh ke check karta hai, toh koi faint ring wapas aaye toh test fail ho jaayega.
+
+**Naya rang chahiye?** Component mein fixed rang mat likho. `globals.css` mein token add karo (`:root` aur `.dark` dono mein), `@theme inline` mein map karo, phir class use karo.
+
+---
+
+## 🔤 Avatar letter kaise banta hai
+
+Avatar mein **sirf first name ka pehla letter** dikhta hai, capital mein. Middle ya last name kabhi use nahi hota.
+
+Ye kaam ek hi function karta hai, `src/lib/avatar.js` ka `getAvatarLetter(name)`:
+
+1. Naam ke aage-peeche ke spaces hatao (`trim`)
+2. Spaces pe tod ke pehla shabd lo (first name). Extra spaces ya tab ho toh bhi chalega.
+3. Uska pehla **dikhne wala character** lo. Ye `Intl.Segmenter` se hota hai, taaki 👩‍💻 jaisa emoji ya alag se laga accent (e + ´) na toote.
+4. Capital karo. Par agar capital karne se ek se zyada letter ban jaayein (jaise `ß` → `SS`), toh original letter hi rakho, kyunki avatar mein hamesha **ek hi** character dikhna chahiye.
+
+| Naam | Letter |
+|---|---|
+| `"Priya Raman"` | `P` |
+| `"Jordan Lee"` | `J` |
+| `"   daniel   okafor "` | `D` |
+| `"Madonna"` | `M` |
+| `"ßtefan"` | `ß` (`SS` nahi) |
+| `"👩‍💻 Dev"` | `👩‍💻` |
+| `""` ya kuch nahi | `?` |
+
+`components/shared/user-avatar.jsx` isi function ko call karta hai, aur **har avatar** (navbar, sidebar, post cards, create-post, suggestions, Explore cards, profile page) isi component se banta hai. Isliye rule ek jagah badlo, har jagah lag jaata hai. Data mein ab `initials` field nahi hai.
 
 ---
 

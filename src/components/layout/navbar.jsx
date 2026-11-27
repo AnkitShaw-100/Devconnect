@@ -10,7 +10,7 @@ import { paths } from "@/lib/paths";
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/80">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-4 sm:px-6">
         <MobileNav />
         <Logo />
@@ -21,19 +21,19 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="icon-lg"
-            className="relative rounded-full text-neutral-600"
+            className="relative rounded-full text-muted-foreground"
             aria-label="Notifications, 3 unread"
           >
             <Bell className="size-5" />
             <span
-              className="absolute top-1.5 right-1.5 size-2 rounded-full bg-blue-600 ring-2 ring-white"
+              className="absolute top-1.5 right-1.5 size-2 rounded-full bg-brand ring-2 ring-background"
               aria-hidden="true"
             />
           </Button>
           <Link
             href={paths.profile}
             aria-label="Your profile"
-            className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring"
           >
             <UserAvatar user={currentUser} className="size-9" />
           </Link>

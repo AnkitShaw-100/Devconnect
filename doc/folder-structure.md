@@ -188,7 +188,7 @@ Button, Card, Avatar, Badge, Input, Sheet, Separator, Dialog, Dropdown Menu, Ske
 | File | Kya check karta hai |
 |---|---|
 | `routing.test.mjs` | Har URL ke liye `page.js` file hai; galat usernames reject hote hain; har developer ka username valid hai; active link ka logic sahi hai |
-| `avatar.test.mjs` | Avatar letter: normal naam, single naam, extra spaces, lowercase, khaali input, `ß`, alag accent, emoji; data mein `initials` nahi bacha |
+| `avatar.test.mjs` | Avatar letter: normal naam, single naam, extra spaces, lowercase, khaali input, `ß`, alag accent, emoji, aur `Intl.Segmenter` na ho tab bhi; data mein `initials` nahi bacha |
 | `theme.test.mjs` | `globals.css` aur Tailwind ke asli colour values se **WCAG contrast** calculate karta hai: text, tags, blue accent, har component ka focus ring, like/trend colours aur har avatar |
 | `developers.test.mjs` | Data helpers sahi posts, bookmarks aur developers dete hain |
 
@@ -206,7 +206,7 @@ Ye tests asli Chromium browser mein app kholte hain aur user ki tarah click kart
 | `not-found.spec.mjs` | Galat URLs pe 404 page + `noindex`, aur 404 page se wapas app mein jaana |
 | `interactions.spec.mjs` | Like button count badhata/ghatata hai, Follow toggle hota hai, Post button disabled hai |
 | `mobile.spec.mjs` | Phone size pe sidebars chhupte hain, ☰ menu khulta hai, link click pe page badalta hai aur menu band hota hai |
-| `theme.spec.mjs` | Dark theme on hai, background aur cards theme tokens se aate hain, active link brand colour mein hai, har avatar mein sirf ek letter hai |
+| `theme.spec.mjs` | Dark theme on hai, background aur cards theme tokens se aate hain, inputs ka background sahi token se aata hai, banner pe avatar ka fill solid hai, active link brand colour mein hai, har avatar mein sirf ek letter hai |
 
 Chalane ke liye: `npm run test:e2e`
 
@@ -240,10 +240,12 @@ globals.css
 **Brand tokens kyun banaye?** Shadcn ke palette mein blue accent nahi hai. Isliye `globals.css` mein 3 chhote tokens add kiye (`--brand`, `--brand-soft`, `--brand-soft-foreground`), light aur dark dono ke liye. `.dark` ke shadcn wale rang waise hi hain.
 
 **Kuch rang abhi bhi `dark:` ke saath likhe hain**, kyunki wo ek-ek jagah hi use hote hain:
-- Avatar ke rang (`data/developers.js`): light mein `bg-rose-100 text-rose-700`, dark mein `dark:bg-rose-500/20 dark:text-rose-300`
+- Avatar ke rang (`data/developers.js`): light mein `bg-rose-100 text-rose-700`, dark mein `dark:bg-rose-950 dark:text-rose-300`. Dark fill **solid** (`-950`) hai, transparent nahi, kyunki sidebar aur profile page pe avatar banner aur card dono ke upar aata hai. Transparent hota toh upar-neeche do alag shade dikhte.
 - Like ka laal dil (`dark:text-rose-400`) aur trending ka hara % (`dark:text-emerald-400`)
 
-**Contrast check:** `tests/theme.test.mjs` asli colour values se WCAG ratio nikalta hai. Text ke liye kam se kam 4.5:1, icons aur focus ring ke liye 3:1. Isi test ne dikhaya ki `ring-ring/50` (aadha transparent ring) dark mein sirf ~1.9–2.3:1 deta hai, isliye ab **saare** components, shadcn ke Button, Input aur Badge bhi, poora `ring-ring` use karte hain. Test har component file ka focus ring padh ke check karta hai, toh koi faint ring wapas aaye toh test fail ho jaayega.
+**Contrast check:** `tests/theme.test.mjs` asli colour values se WCAG ratio nikalta hai. Text ke liye kam se kam 4.5:1, icons aur focus ring ke liye 3:1. Isi test ne dikhaya ki aadhe transparent focus indicators dark mein fail hote hain: `ring-ring/50` ~1.9:1, `ring-destructive/40` 1.95:1, aur `globals.css` ka global `outline-ring/50` 1.87:1. Isliye ab **saare** focus indicators solid hain: har component ka `ring-ring` / `ring-destructive` (shadcn Button, Input, Badge bhi) aur global `outline-ring`. Test har component file aur `globals.css` ke focus ring/outline ko unki asli opacity pe, har surface (background, card, muted, popover, active link ka tint) pe check karta hai. Koi faint ring wapas aaye toh test fail ho jaayega.
+
+**Inputs ka ek pecha:** shadcn `Input` ki apni class `dark:bg-input/30` hai, jo dark mode mein plain `bg-muted` se zyada strong hai. Isliye search box aur create-post input pe `dark:bg-muted` jaisa `dark:` override bhi likha hai, warna unka rang lagta hi nahi.
 
 **Naya rang chahiye?** Component mein fixed rang mat likho. `globals.css` mein token add karo (`:root` aur `.dark` dono mein), `@theme inline` mein map karo, phir class use karo.
 
@@ -257,7 +259,7 @@ Ye kaam ek hi function karta hai, `src/lib/avatar.js` ka `getAvatarLetter(name)`
 
 1. Naam ke aage-peeche ke spaces hatao (`trim`)
 2. Spaces pe tod ke pehla shabd lo (first name). Extra spaces ya tab ho toh bhi chalega.
-3. Uska pehla **dikhne wala character** lo. Ye `Intl.Segmenter` se hota hai, taaki 👩‍💻 jaisa emoji ya alag se laga accent (e + ´) na toote.
+3. Uska pehla **dikhne wala character** lo. Ye `Intl.Segmenter` se hota hai, taaki 👩‍💻 jaisa emoji ya alag se laga accent (e + ´) na toote. Purane browsers (jaise Firefox 125 se pehle) mein `Intl.Segmenter` nahi hota, wahan pehla code point liya jaata hai. Segmenter zaroorat pe hi banta hai, module load pe nahi, taaki aise browser mein page crash na ho.
 4. Capital karo. Par agar capital karne se ek se zyada letter ban jaayein (jaise `ß` → `SS`), toh original letter hi rakho, kyunki avatar mein hamesha **ek hi** character dikhna chahiye.
 
 | Naam | Letter |

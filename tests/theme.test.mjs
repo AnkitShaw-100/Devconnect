@@ -88,7 +88,21 @@ const background = token("background");
 const card = token("card");
 const muted = token("muted");
 const secondary = token("secondary");
+const popover = token("popover"); // mobile menu sheet, dialogs, dropdowns
 const on = (colour, surface) => composite(colour, surface);
+
+// Every surface something can be drawn on. The active nav link's tint sits
+// on the page background (desktop sidebar) or the popover (mobile menu).
+const surfaces = {
+  background,
+  card,
+  muted,
+  popover,
+  "brand-soft on background": on(token("brand-soft"), background),
+  "brand-soft on popover": on(token("brand-soft"), popover),
+};
+const surfacesExcept = (...names) =>
+  Object.entries(surfaces).filter(([name]) => !names.includes(name));
 
 function assertContrast(label, foreground, surface, minimum) {
   const ratio = contrast(on(foreground, surface), surface);
@@ -98,16 +112,48 @@ function assertContrast(label, foreground, surface, minimum) {
   );
 }
 
+// Source of every component plus globals.css, for scanning class names.
+const componentsDir = new URL("../src/components/", import.meta.url);
+const sources = [
+  ...readdirSync(componentsDir, { recursive: true })
+    .filter((f) => f.endsWith(".jsx"))
+    .map((f) => ({
+      file: `components/${f.replaceAll("\\", "/")}`,
+      text: readFileSync(new URL(f.replaceAll("\\", "/"), componentsDir), "utf8"),
+    })),
+  { file: "app/globals.css", text: globalsCss },
+];
+
+// Focus indicators: focus-visible:ring-<colour>[/<opacity>] and the global
+// outline-<colour>[/<opacity>]. Width and offset utilities (ring-3,
+// ring-offset-2) are skipped because they aren't colour tokens. When a file
+// sets a dark: version for a colour, that one wins in dark mode, so the
+// plain one is skipped there.
+function focusIndicators() {
+  const found = [];
+  for (const { file, text } of sources) {
+    const pattern = /(dark:)?(?:focus-visible:ring|outline)-([a-z]+(?:-[a-z]+)*)(?:\/(\d+))?(?![\w-])/g;
+    const matches = [...text.matchAll(pattern)].filter(([, , colour]) => colour in dark);
+    const darkColours = new Set(matches.filter(([, isDark]) => isDark).map(([, , c]) => c));
+    for (const [cls, isDark, colour, opacity] of matches) {
+      if (!isDark && darkColours.has(colour)) continue;
+      found.push({ file, cls, colour, alpha: opacity ? Number(opacity) / 100 : 1 });
+    }
+  }
+  return found;
+}
+
 // --- tests ---
 
-test("the root layout turns the dark theme on by default", () => {
-  const layout = readFileSync(new URL("../src/app/layout.js", import.meta.url), "utf8");
-  assert.match(layout, /className=\{`dark /);
-});
+// The "dark is on by default" check lives in e2e/theme.spec.mjs: it checks
+// the rendered <html> class, computed color-scheme and real colours, which a
+// regex over layout.js source can't do reliably.
 
 test("body text is readable on every surface", () => {
-  for (const [name, surface] of [["background", background], ["card", card], ["muted", muted]]) {
+  for (const [name, surface] of surfacesExcept()) {
     assertContrast(`foreground on ${name}`, token("foreground"), surface, AA_TEXT);
+  }
+  for (const [name, surface] of surfacesExcept("brand-soft on background", "brand-soft on popover")) {
     assertContrast(`muted-foreground on ${name}`, token("muted-foreground"), surface, AA_TEXT);
   }
 });
@@ -121,41 +167,33 @@ test("secondary text is readable on tags and stat tiles", () => {
 });
 
 test("blue accent is readable", () => {
-  // Active nav link sits on the page background; empty-state icons on cards.
-  for (const [name, surface] of [["background", background], ["card", card]]) {
-    const softSurface = on(token("brand-soft"), surface);
-    assertContrast(`active link on ${name}`, token("brand-soft-foreground"), softSurface, AA_TEXT);
+  // Active nav link: its text on its own tint, desktop and mobile menu.
+  for (const name of ["brand-soft on background", "brand-soft on popover"]) {
+    assertContrast(`active link (${name})`, token("brand-soft-foreground"), surfaces[name], AA_TEXT);
   }
-  assertContrast("accent icon on card", token("brand-soft-foreground"), card, AA_NON_TEXT);
+  // Accent icons (trending, empty state) sit on cards, the page and menus.
+  for (const name of ["background", "card", "popover"]) {
+    assertContrast(`accent icon on ${name}`, token("brand-soft-foreground"), surfaces[name], AA_NON_TEXT);
+  }
   // Logo mark: white icon on the solid brand colour.
   assertContrast("logo", token("brand-foreground"), token("brand"), AA_TEXT);
   assertContrast("primary button", token("primary-foreground"), token("primary"), AA_TEXT);
 });
 
-test("focus rings stay visible", () => {
-  for (const [name, surface] of [["background", background], ["card", card]]) {
-    assertContrast(`focus ring on ${name}`, token("ring"), surface, AA_NON_TEXT);
-  }
-});
+// Every focus indicator in every component (shadcn ui/ included) and the
+// global outline in globals.css, on every surface, at its real opacity.
+test("every focus ring and outline keeps 3:1 contrast", () => {
+  const indicators = focusIndicators();
+  assert.ok(indicators.length >= 5, "expected to find focus indicators");
+  assert.ok(
+    indicators.some(({ file }) => file === "app/globals.css"),
+    "expected the global outline in globals.css"
+  );
 
-// Every focus ring in every component, shadcn ui/ included: a translucent
-// ring (e.g. focus-visible:ring-ring/50) must still reach 3:1 on its own.
-test("every component's focus ring opacity keeps 3:1 contrast", () => {
-  const componentsDir = new URL("../src/components/", import.meta.url);
-  const files = readdirSync(componentsDir, { recursive: true }).filter((f) => f.endsWith(".jsx"));
-  assert.ok(files.length > 20);
-
-  for (const file of files) {
-    const source = readFileSync(new URL(file.replaceAll("\\", "/"), componentsDir), "utf8");
-    for (const [, opacity] of source.matchAll(/focus-visible:ring-ring(?:\/(\d+))?\b/g)) {
-      const ring = { ...token("ring"), alpha: opacity ? Number(opacity) / 100 : 1 };
-      for (const [name, surface] of [["background", background], ["card", card]]) {
-        const ratio = contrast(on(ring, surface), surface);
-        assert.ok(
-          ratio >= AA_NON_TEXT,
-          `${file}: focus ring ring-ring/${opacity} is ${ratio.toFixed(2)}:1 on ${name}`
-        );
-      }
+  for (const { file, cls, colour, alpha } of indicators) {
+    for (const [name, surface] of surfacesExcept()) {
+      const ratio = contrast(on({ ...token(colour), alpha }, surface), surface);
+      assert.ok(ratio >= AA_NON_TEXT, `${file}: ${cls} is ${ratio.toFixed(2)}:1 on ${name}`);
     }
   }
 });
@@ -165,16 +203,18 @@ test("status colours are readable on cards", () => {
   assertContrast("trend change", tailwind("emerald-400"), card, AA_TEXT);
 });
 
-test("every avatar colour is readable in dark mode", () => {
+test("every avatar has an opaque, readable dark colour", () => {
   for (const { username, avatarColor } of developers) {
-    const bg = avatarColor.match(/dark:bg-([a-z]+-\d+)\/(\d+)/);
+    const bg = avatarColor.match(/dark:bg-([a-z]+-\d+)(?:\/(\d+))?/);
     const text = avatarColor.match(/dark:text-([a-z]+-\d+)/);
     assert.ok(bg && text, `${username} has no dark avatar colours`);
 
-    // Avatars appear on cards and on the navbar (page background).
-    for (const [name, surface] of [["card", card], ["background", background]]) {
-      const avatarSurface = on(tailwind(bg[1], Number(bg[2]) / 100), surface);
-      assertContrast(`${username} avatar on ${name}`, tailwind(text[1]), avatarSurface, AA_TEXT);
+    // Avatars overlap a banner and a card at once (sidebar, profile page);
+    // a translucent fill would show two shades, so it must be opaque.
+    assert.equal(bg[2], undefined, `${username}: dark avatar fill must be opaque, not /${bg[2]}`);
+
+    for (const [name, surface] of surfacesExcept()) {
+      assertContrast(`${username} avatar on ${name}`, tailwind(text[1]), on(tailwind(bg[1]), surface), AA_TEXT);
     }
   }
 });

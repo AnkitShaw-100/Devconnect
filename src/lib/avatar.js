@@ -1,12 +1,27 @@
 const FALLBACK_LETTER = "?";
 
-const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
+let segmenter;
+
+// Intl.Segmenter is missing in some browsers still in use (e.g. Firefox
+// before 125), so it is created lazily and only when available. Creating it
+// at module load would throw there and break every page that shows an avatar.
+function getSegmenter() {
+  if (typeof Intl === "undefined" || typeof Intl.Segmenter !== "function") return null;
+  segmenter ??= new Intl.Segmenter("en", { granularity: "grapheme" });
+  return segmenter;
+}
 
 // First user-visible character (grapheme cluster) of a string, so that
 // "e" + combining accent or a multi-part emoji like 👩‍💻 stays whole.
+// Without Intl.Segmenter it falls back to the first code point, which still
+// never splits a surrogate pair.
 function firstGrapheme(text) {
-  const [first] = graphemes.segment(text);
-  return first ? first.segment : "";
+  const graphemes = getSegmenter();
+  if (graphemes) {
+    const [first] = graphemes.segment(text);
+    return first ? first.segment : "";
+  }
+  return Array.from(text)[0] ?? "";
 }
 
 // The avatar letter is the first character of the first name only:

@@ -20,7 +20,7 @@ export function CreatePost({ user }) {
           name="post"
           placeholder="Share what you're building, learning or debugging…"
           aria-label="Write a post"
-          className="h-10 rounded-full border-border bg-muted/50 px-4 shadow-none"
+          className="h-10 rounded-full border-border bg-muted/50 px-4 shadow-none dark:bg-muted/50"
         />
       </div>
       <div className="flex items-center gap-1 py-2.5 pr-4 pl-[3.75rem] sm:pr-5 sm:pl-[4.25rem]">

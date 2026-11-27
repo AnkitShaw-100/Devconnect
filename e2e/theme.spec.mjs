@@ -99,3 +99,46 @@ test("the active nav link uses the brand tokens", async ({ page }) => {
   // during hydration.
   await expect(active).toHaveCSS("color", await themeColor(page, "--brand-soft-foreground"));
 });
+
+// Computed background of a throwaway element with the given utility classes,
+// for comparing an element against what a token class should produce.
+function classBackground(page, className) {
+  return page.evaluate((cls) => {
+    const probe = document.createElement("div");
+    probe.className = cls;
+    document.body.append(probe);
+    const color = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return color;
+  }, className);
+}
+
+test("inputs use their muted backgrounds, not the default input tint", async ({ page }) => {
+  await page.goto("/");
+  const search = page.getByRole("searchbox", { name: "Search DevConnect" });
+  const composer = page.getByRole("textbox", { name: "Write a post" });
+
+  await expect(search).toHaveCSS("background-color", await classBackground(page, "bg-muted"));
+  await expect(composer).toHaveCSS("background-color", await classBackground(page, "bg-muted/50"));
+
+  // Focusing the search box switches it to the page background.
+  await search.focus();
+  await expect(search).toHaveCSS("background-color", await classBackground(page, "bg-background"));
+});
+
+test("avatars over a cover banner have one solid colour", async ({ page }) => {
+  await page.goto("/developers/dokafor");
+  // The big profile avatar overlaps the banner; its fill must be opaque so
+  // the banner and the card don't show through as two different shades.
+  const fill = await page
+    .getByRole("main")
+    .locator('[data-slot="avatar-fallback"]')
+    .first()
+    .evaluate((el) => {
+      const ctx = document.createElement("canvas").getContext("2d");
+      ctx.fillStyle = getComputedStyle(el).backgroundColor;
+      ctx.fillRect(0, 0, 1, 1);
+      return ctx.getImageData(0, 0, 1, 1).data[3]; // alpha 0-255
+    });
+  expect(fill).toBe(255);
+});

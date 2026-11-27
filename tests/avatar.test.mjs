@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { getAvatarLetter } from "../src/lib/avatar.js";
 import { developers } from "../src/data/developers.js";
 
@@ -72,4 +73,35 @@ test("dummy data no longer stores initials", () => {
   for (const developer of developers) {
     assert.ok(!("initials" in developer), `${developer.username} still has initials`);
   }
+});
+
+// Browsers without Intl.Segmenter (e.g. Firefox < 125) must still work.
+test("works when Intl.Segmenter is missing", () => {
+  const original = Intl.Segmenter;
+  Intl.Segmenter = undefined;
+  try {
+    assert.equal(getAvatarLetter("Priya Raman"), "P");
+    assert.equal(getAvatarLetter("  jordan lee"), "J");
+    assert.equal(getAvatarLetter("ßtefan"), "ß");
+    assert.equal(getAvatarLetter("𝒜lex"), "𝒜"); // surrogate pair stays whole
+    assert.equal(getAvatarLetter(""), "?");
+  } finally {
+    Intl.Segmenter = original;
+  }
+});
+
+test("importing the module does not need Intl.Segmenter", () => {
+  // Fresh process where Intl.Segmenter never existed, so module-level code
+  // that constructs it would throw on import.
+  const moduleUrl = new URL("../src/lib/avatar.js", import.meta.url).href;
+  const script = `delete Intl.Segmenter;
+    const { getAvatarLetter } = await import(${JSON.stringify(moduleUrl)});
+    process.stdout.write(getAvatarLetter("mei lin"));`;
+  const result = spawnSync(
+    process.execPath,
+    ["--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--input-type=module", "-e", script],
+    { encoding: "utf8" }
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "M");
 });

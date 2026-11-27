@@ -92,8 +92,10 @@ test("bookmarks page lists the saved posts", async ({ page }) => {
 test("navigating after scrolling shows the new page from the top", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 600 });
   await page.goto("/");
-  await page.mouse.wheel(0, 2000);
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
+  // Scroll to the bottom; any offset past ~120px puts the next page's heading
+  // (which starts ~80px down) out of view, which is what this test needs.
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(200);
 
   await primaryNav(page).getByRole("link", { name: "Explore" }).click();
   await expect(page).toHaveURL("/explore");
@@ -102,11 +104,16 @@ test("navigating after scrolling shows the new page from the top", async ({ page
   const heading = page.getByRole("heading", { level: 1 });
   await expect(heading).toHaveText("Explore");
   await expect(heading).toBeInViewport();
-  const headerBottom = await page
-    .getByRole("banner")
-    .evaluate((el) => el.getBoundingClientRect().bottom);
-  const headingTop = await heading.evaluate((el) => el.getBoundingClientRect().top);
-  expect(headingTop).toBeGreaterThanOrEqual(headerBottom);
+  // Polled, because Next.js applies the scroll just after the new page renders.
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const header = document.querySelector("header").getBoundingClientRect();
+        const h1 = document.querySelector("h1").getBoundingClientRect();
+        return h1.top - header.bottom;
+      })
+    )
+    .toBeGreaterThanOrEqual(0);
 });
 
 test("the layout keeps its state across navigations", async ({ page }) => {

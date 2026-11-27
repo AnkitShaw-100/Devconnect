@@ -1,12 +1,11 @@
-import { RouteTree } from "@/components/router/route-tree";
+import { NotFoundPage } from "@/components/pages/not-found-page";
 
 export const metadata = {
   title: "Page not found · DevConnect",
 };
 
-// Rendered when the catch-all page calls notFound(). "/404" matches no route,
-// so React Router shows its not-found view on the server, and the browser
-// router reaches the same view for the real URL, so hydration lines up.
+// Used for URLs that match no route, and when a page calls notFound().
+// It renders inside the root layout, so the navbar and sidebars stay.
 export default function NotFound() {
-  return <RouteTree location="/404" />;
+  return <NotFoundPage />;
 }

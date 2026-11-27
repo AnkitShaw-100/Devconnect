@@ -1,10 +1,10 @@
 import { CodeXml } from "lucide-react";
-import { RouterLink } from "@/components/router/router-links";
+import Link from "next/link";
 
 export function Logo() {
   return (
-    <RouterLink
-      to="/"
+    <Link
+      href="/"
       className="flex shrink-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       aria-label="DevConnect home"
     >
@@ -14,6 +14,6 @@ export function Logo() {
       <span className="text-[17px] font-semibold tracking-tight text-neutral-900">
         DevConnect
       </span>
-    </RouterLink>
+    </Link>
   );
 }

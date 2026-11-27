@@ -5,6 +5,13 @@ export const paths = {
   explore: "/explore",
   bookmarks: "/bookmarks",
   profile: "/profile",
-  developerPattern: "/developers/:username",
   developer: (username) => `/developers/${encodeURIComponent(username)}`,
 };
+
+// A nav link is active on its own URL and on any URL nested under it.
+// Home ("/") only matches exactly, or it would match every page.
+export function isActivePath(pathname, href) {
+  if (!pathname) return false;
+  if (href === paths.home) return pathname === paths.home;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}

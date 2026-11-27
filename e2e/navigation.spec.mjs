@@ -88,3 +88,39 @@ test("bookmarks page lists the saved posts", async ({ page }) => {
   await expect(saved).toHaveCount(2);
   await expect(saved.first()).toContainText("Daniel Okafor");
 });
+
+test("navigating after scrolling shows the new page from the top", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await page.goto("/");
+  await page.mouse.wheel(0, 2000);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
+
+  await primaryNav(page).getByRole("link", { name: "Explore" }).click();
+  await expect(page).toHaveURL("/explore");
+
+  // The heading must be in view and not hidden behind the sticky navbar.
+  const heading = page.getByRole("heading", { level: 1 });
+  await expect(heading).toHaveText("Explore");
+  await expect(heading).toBeInViewport();
+  const headerBottom = await page
+    .getByRole("banner")
+    .evaluate((el) => el.getBoundingClientRect().bottom);
+  const headingTop = await heading.evaluate((el) => el.getBoundingClientRect().top);
+  expect(headingTop).toBeGreaterThanOrEqual(headerBottom);
+});
+
+test("the layout keeps its state across navigations", async ({ page }) => {
+  await page.goto("/");
+  const suggestions = page.getByRole("complementary", { name: "Community highlights" });
+  await suggestions.getByRole("button", { name: "Follow Sofia Martins" }).click();
+  await expect(
+    suggestions.getByRole("button", { name: "Unfollow Sofia Martins" })
+  ).toBeVisible();
+
+  // The sidebar lives in the root layout, which isn't re-rendered on navigation.
+  await primaryNav(page).getByRole("link", { name: "Bookmarks" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Bookmarks");
+  await expect(
+    suggestions.getByRole("button", { name: "Unfollow Sofia Martins" })
+  ).toBeVisible();
+});

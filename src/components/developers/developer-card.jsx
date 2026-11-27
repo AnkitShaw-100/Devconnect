@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { FollowButton } from "@/components/layout/follow-button";
-import { RouterLink } from "@/components/router/router-links";
+import Link from "next/link";
 import { TechTag } from "@/components/shared/tech-tag";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { paths } from "@/lib/paths";
@@ -12,12 +12,12 @@ export function DeveloperCard({ developer }) {
       <div className="flex items-start gap-3">
         <UserAvatar user={developer} size="lg" />
         <div className="min-w-0 flex-1">
-          <RouterLink
-            to={paths.developer(developer.username)}
+          <Link
+            href={paths.developer(developer.username)}
             className="block truncate font-semibold text-neutral-900 hover:underline focus-visible:underline focus-visible:outline-none"
           >
             {developer.name}
-          </RouterLink>
+          </Link>
           <p className="truncate text-xs text-neutral-500">{developer.role}</p>
         </div>
         <FollowButton name={developer.name} />

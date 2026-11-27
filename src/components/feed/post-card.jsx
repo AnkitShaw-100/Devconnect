@@ -2,7 +2,7 @@ import { Ellipsis, MessageCircle, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LikeButton } from "@/components/feed/like-button";
-import { RouterLink } from "@/components/router/router-links";
+import Link from "next/link";
 import { TechTag } from "@/components/shared/tech-tag";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { formatCount } from "@/lib/format";
@@ -15,21 +15,21 @@ export function PostCard({ post }) {
     <Card className="gap-0 py-0 shadow-xs ring-neutral-200">
       <article>
         <header className="flex items-start gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
-          <RouterLink
-            to={paths.developer(author.username)}
+          <Link
+            href={paths.developer(author.username)}
             className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             tabIndex={-1}
             aria-hidden="true"
           >
             <UserAvatar user={author} size="lg" />
-          </RouterLink>
+          </Link>
           <div className="min-w-0 flex-1">
-            <RouterLink
-              to={paths.developer(author.username)}
+            <Link
+              href={paths.developer(author.username)}
               className="block truncate font-semibold text-neutral-900 hover:underline focus-visible:underline focus-visible:outline-none"
             >
               {author.name}
-            </RouterLink>
+            </Link>
             <p className="truncate text-xs text-neutral-500">
               @{author.username} · {author.role}
             </p>

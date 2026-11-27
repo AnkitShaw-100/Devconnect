@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -22,7 +23,10 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-neutral-50">{children}</body>
+      <body className="min-h-full flex flex-col bg-neutral-50">
+        {/* The shell stays mounted across navigations; only `children` changes. */}
+        <AppShell>{children}</AppShell>
+      </body>
     </html>
   );
 }

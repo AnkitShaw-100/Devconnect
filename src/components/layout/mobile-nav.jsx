@@ -11,7 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { SidebarNavLink } from "@/components/router/router-links";
+import { NavLink } from "@/components/layout/nav-link";
 import { SearchBar } from "@/components/layout/search-bar";
 import { primaryNav } from "@/data/navigation";
 
@@ -45,10 +45,10 @@ export function MobileNav() {
           <ul className="space-y-1">
             {primaryNav.map(({ label, href, icon: Icon }) => (
               <li key={href}>
-                <SidebarNavLink to={href} onClick={() => setOpen(false)}>
+                <NavLink href={href} onClick={() => setOpen(false)}>
                   <Icon className="size-[18px]" aria-hidden="true" />
                   {label}
-                </SidebarNavLink>
+                </NavLink>
               </li>
             ))}
           </ul>

@@ -64,3 +64,8 @@ test("a developer without posts shows the empty state", async ({ page }) => {
   await expect(page.getByText("No posts yet")).toBeVisible();
   await expect(page.getByRole("article")).toHaveCount(0);
 });
+
+test("URL-encoded usernames load the same profile", async ({ page }) => {
+  await page.goto("/developers/meilin%2Edev");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Mei Lin");
+});

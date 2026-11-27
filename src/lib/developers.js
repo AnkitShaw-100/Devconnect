@@ -14,6 +14,25 @@ export function getDeveloper(username) {
   return developersByUsername.get(username) ?? null;
 }
 
+// GitHub-style usernames: letters, digits, dot, underscore, hyphen.
+const USERNAME_PATTERN = /^[a-z0-9._-]{1,39}$/i;
+
+// Looks up the developer for a [username] route param. The param comes from
+// the URL, so it is treated as untrusted: anything malformed returns null.
+export function findDeveloperByParam(param) {
+  if (typeof param !== "string") return null;
+
+  let username;
+  try {
+    username = decodeURIComponent(param);
+  } catch {
+    return null;
+  }
+
+  if (!USERNAME_PATTERN.test(username)) return null;
+  return getDeveloper(username);
+}
+
 export function getAllDevelopers() {
   return developers;
 }

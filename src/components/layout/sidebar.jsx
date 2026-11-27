@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
-import { RouterLink, SidebarNavLink } from "@/components/router/router-links";
+import Link from "next/link";
+import { NavLink } from "@/components/layout/nav-link";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { currentUser } from "@/data/current-user";
 import { primaryNav } from "@/data/navigation";
@@ -15,12 +16,12 @@ function ProfileSummary() {
           size="lg"
           className="size-14 ring-4 ring-white [&_[data-slot=avatar-fallback]]:text-base"
         />
-        <RouterLink
-          to={paths.profile}
+        <Link
+          href={paths.profile}
           className="mt-2 font-semibold text-neutral-900 hover:underline focus-visible:underline focus-visible:outline-none"
         >
           {currentUser.name}
-        </RouterLink>
+        </Link>
         <p className="text-xs text-neutral-500">{currentUser.role}</p>
       </div>
       <dl className="grid grid-cols-2 border-t border-neutral-100 text-center">
@@ -45,10 +46,10 @@ export function Sidebar() {
         <ul className="space-y-1">
           {primaryNav.map(({ label, href, icon: Icon }) => (
             <li key={href}>
-              <SidebarNavLink to={href}>
+              <NavLink href={href}>
                 <Icon className="size-[18px]" aria-hidden="true" />
                 {label}
-              </SidebarNavLink>
+              </NavLink>
             </li>
           ))}
         </ul>

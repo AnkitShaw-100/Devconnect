@@ -179,6 +179,21 @@ Button, Card, Avatar, Badge, Input, Sheet, Separator, Dialog, Dropdown Menu, Ske
 
 Chalane ke liye: `npm test` (Node ka built-in test runner, koi extra package nahi).
 
+## 12. `e2e/` – Browser tests (Playwright, project root mein)
+
+Ye tests asli Chromium browser mein app kholte hain aur user ki tarah click karte hain. Production build pe chalte hain (`playwright.config.mjs` khud build karke server start karta hai).
+
+| File | Kya check karta hai |
+|---|---|
+| `fixtures.mjs` | Har test mein console error ya hydration error aaye toh test fail. Saath mein helper jo check karta hai ki navigation bina page reload ke hui. |
+| `navigation.spec.mjs` | Har page direct khulta hai, sidebar ka sahi link active hota hai, link click pe bina reload page badalta hai, back/forward buttons kaam karte hain |
+| `profiles.spec.mjs` | Author ke naam, Explore cards aur suggestions se profile khulta hai; apne profile pe "Edit profile", dusre pe "Follow"; posts na hon toh "No posts yet" |
+| `not-found.spec.mjs` | Galat URLs pe 404 page + `noindex`, aur 404 page se wapas app mein jaana |
+| `interactions.spec.mjs` | Like button count badhata/ghatata hai, Follow toggle hota hai, Post button disabled hai |
+| `mobile.spec.mjs` | Phone size pe sidebars chhupte hain, ☰ menu khulta hai, link click pe page badalta hai aur menu band hota hai, page screen se bahar nahi jaata |
+
+Chalane ke liye: `npm run test:e2e`
+
 ---
 
 ## Server vs Client Components: simple trick

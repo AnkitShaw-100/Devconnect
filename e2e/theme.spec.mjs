@@ -67,7 +67,7 @@ test("avatars show only the first letter of the first name", async ({ page }) =>
   await page.goto("/");
 
   // Navbar, sidebar profile card and create-post all show the current user.
-  await expect(page.getByRole("link", { name: "Your profile" })).toHaveText("J");
+  await expect(page.getByRole("button", { name: "Account menu" })).toHaveText("J");
   const feed = page.getByRole("region", { name: "Feed" });
   await expect(feed.getByRole("article").nth(0).locator('[data-slot="avatar-fallback"]')).toHaveText("P");
   await expect(feed.getByRole("article").nth(1).locator('[data-slot="avatar-fallback"]')).toHaveText("D");
@@ -113,13 +113,14 @@ function classBackground(page, className) {
   }, className);
 }
 
-test("inputs use their muted backgrounds, not the default input tint", async ({ page }) => {
+test("inputs use their intended backgrounds, not the default input tint", async ({ page }) => {
   await page.goto("/");
   const search = page.getByRole("searchbox", { name: "Search DevConnect" });
   const composer = page.getByRole("textbox", { name: "Write a post" });
 
   await expect(search).toHaveCSS("background-color", await classBackground(page, "bg-muted"));
-  await expect(composer).toHaveCSS("background-color", await classBackground(page, "bg-muted/50"));
+  // The composer text box is borderless and transparent, like the card behind it.
+  await expect(composer).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
 
   // Focusing the search box switches it to the page background.
   await search.focus();
@@ -141,4 +142,25 @@ test("avatars over a cover banner have one solid colour", async ({ page }) => {
       return ctx.getImageData(0, 0, 1, 1).data[3]; // alpha 0-255
     });
   expect(fill).toBe(255);
+});
+
+test("profile avatar is large and overlaps the banner's bottom edge", async ({ page }) => {
+  await page.goto("/developers/priyacodes");
+  const avatar = page.getByRole("main").locator('[data-slot="avatar"]').first();
+  const banner = page.getByRole("main").locator('[data-slot="profile-banner"]');
+  const [a, b] = [await avatar.boundingBox(), await banner.boundingBox()];
+
+  // At least 96px wide (it once stayed at 40px: size="lg" outranked the class).
+  expect(a.width).toBeGreaterThanOrEqual(96);
+  // Its top half sits on the banner, its bottom half below it.
+  const bannerBottom = b.y + b.height;
+  expect(a.y).toBeLessThan(bannerBottom);
+  expect(a.y + a.height).toBeGreaterThan(bannerBottom);
+});
+
+test("navbar search bar is centred", async ({ page }) => {
+  await page.goto("/");
+  const search = await page.getByRole("searchbox", { name: "Search DevConnect" }).boundingBox();
+  const width = page.viewportSize().width;
+  expect(Math.abs(search.x + search.width / 2 - width / 2)).toBeLessThanOrEqual(2);
 });

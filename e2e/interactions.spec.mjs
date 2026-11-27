@@ -46,7 +46,12 @@ test("follow button toggles between Follow and Following", async ({ page }) => {
   );
 });
 
-test("post button stays disabled until publishing exists", async ({ page }) => {
+test("post button is disabled until the post has text", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("button", { name: "Post", exact: true })).toBeDisabled();
+  const post = page.getByRole("button", { name: "Post", exact: true });
+  await expect(post).toBeDisabled();
+  await page.getByRole("textbox", { name: "Write a post" }).fill("   ");
+  await expect(post).toBeDisabled(); // whitespace only
+  await page.getByRole("textbox", { name: "Write a post" }).fill("Hello DevConnect");
+  await expect(post).toBeEnabled();
 });

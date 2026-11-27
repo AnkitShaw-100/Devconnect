@@ -7,3 +7,11 @@ const compact = new Intl.NumberFormat("en-US", {
 export function formatCount(value) {
   return compact.format(value);
 }
+
+const full = new Intl.NumberFormat("en-US");
+
+// Exact count with grouping, e.g. 1871 -> "1,871". Used where a change of
+// one must be visible (follower counts after following someone).
+export function formatNumber(value) {
+  return full.format(value);
+}

@@ -1,6 +1,6 @@
 # DevConnect – `src` Folder Structure
 
-`src` folder ke andar kya hai aur kaunsi file kya karti hai, iska simple guide. (Updated: Next.js App Router, dark theme aur single-letter avatars ke baad.)
+`src` folder ke andar kya hai aur kaunsi file kya karti hai, iska simple guide. (Updated: Milestone 3 — reusable components aur frontend interactions ke baad.)
 
 ## Overall structure
 
@@ -19,14 +19,16 @@ src/
 │   ├── loading.js           → Loading skeleton
 │   └── error.js             → Error page
 ├── components/              → UI ke saare chhote-bade tukde
-│   ├── layout/              → Navbar, sidebars, nav links, poora dhaancha
-│   ├── feed/                → Posts aur post likhne wala card
+│   ├── providers/           → Shared state: likes, follows, bookmarks, comments, naye posts
+│   ├── layout/              → Navbar, sidebars, nav links, user menu, follow button
+│   ├── feed/                → Post card ke hisse, comments, menus, dialogs, create-post form
+│   ├── profile/             → Profile ke client hisse (stats, posts)
 │   ├── developers/          → Developer cards (Explore page ke liye)
 │   ├── pages/               → Har route ka asli content
 │   ├── shared/              → Baar-baar use hone wale chhote components
 │   └── ui/                  → shadcn ke components
-├── data/                    → Dummy data (fake posts, developers)
-└── lib/                     → Helpers: data padhna, URLs, active link, avatar letter
+├── data/                    → Dummy data (posts, comments, developers)
+└── lib/                     → Helpers: data, URLs, avatar letter, form validation, interaction store
 
 tests/                       → Unit tests (project root mein)
 e2e/                         → Browser tests, Playwright (project root mein)
@@ -55,7 +57,7 @@ Ek line mein: **`app` ka folder structure hi URL hai, `data` mein content hai, `
 
 ### `app/layout.js` ⭐ (sabse important file)
 
-- Har page isi ke andar dikhta hai. Isme `<AppShell>` hai, yaani navbar, left sidebar aur right sidebar.
+- Har page isi ke andar dikhta hai. Isme `<InteractionsProvider>` (shared state) aur `<AppShell>` (navbar, left sidebar, right sidebar) hain.
 - Page badalne pe **layout dobara nahi banta**, sirf beech wala content (`children`) badalta hai. Isliye sidebar ka Follow state navigation ke baad bhi bana rehta hai.
 - `<html>` pe `dark` class lagi hai, isliye **poora app by default dark theme** mein hai. `scheme-dark` se browser ke scrollbars aur inputs bhi dark ho jaate hain. Abhi koi theme toggle nahi hai.
 
@@ -95,13 +97,14 @@ Global styling: Tailwind, theme colours aur font. Rangon ke liye neeche wala sec
 |---|---|
 | `app-shell.jsx` | 3-column layout: left sidebar, beech mein content, right sidebar. Mobile pe sirf beech wala dikhta hai. `app/layout.js` ise use karta hai. |
 | `nav-link.jsx` | Sidebar/mobile menu ka link. `usePathname()` se current URL padh ke active link **blue highlight** karta hai. (Client Component) |
-| `navbar.jsx` | Upar ki bar: logo, search, notification bell, avatar (click → `/profile`) |
+| `navbar.jsx` | Upar ki bar: logo, **beech mein** search, notification bell, avatar. Bade screens pe 3-column grid (`1fr`, search, `1fr`), isliye search hamesha center mein. |
+| `user-menu.jsx` | Navbar avatar ka dropdown: naam, My profile / Bookmarks / Explore links, Settings aur Sign out (disabled, auth abhi nahi). Keyboard se chalta hai. |
 | `logo.jsx` | Blue box wala `</>` icon + "DevConnect" naam (click → Home) |
 | `search-bar.jsx` | Search box with search icon |
 | `mobile-nav.jsx` | Mobile pe ☰ button, jo left se menu slide karke kholta hai. Link click karo toh band ho jaata hai. |
 | `sidebar.jsx` | Left side: profile card (naam click → `/profile`) + Home/Explore/Bookmarks/Profile links |
 | `right-sidebar.jsx` | Right side ke 3 cards: Trending technologies, Suggested developers (naam click → unka profile), Community stats |
-| `follow-button.jsx` | "Follow" button, click pe "Following" ban jaata hai |
+| `follow-button.jsx` | Follow / Following. State shared store mein, username se, isliye sidebar, Explore aur profile ke buttons sync rehte hain. "Following" pe hover/focus karo toh "Unfollow" dikhta hai. |
 
 **`nav-link.jsx` mein `<Suspense>` kyun hai?** Cache Components on hone par, agar URL ka username build ke time pata nahi tha (jaise `/developers/nobody`), toh `usePathname()` server pe ruk (suspend) jaata hai. `<Suspense>` us waqt bina highlight wala same link dikha deta hai, taaki baaki layout ban sake. Iske bina build fail hota hai.
 
@@ -111,10 +114,20 @@ Global styling: Tailwind, theme colours aur font. Rangon ke liye neeche wala sec
 
 | File | Kya karti hai |
 |---|---|
-| `post-card.jsx` | Ek post ka card: avatar, naam (click → author ka profile), @username, time, content, tags, aur Like / Comment / Share buttons |
+| `post-card.jsx` | Post card, chhote hisson se bana: `PostHeader` (author + "…" menu), `PostBody`, `PostTags`, aur `PostActions`. Khud mein koi hook nahi, isliye server **aur** client dono jagah render ho sakta hai. |
+| `post-actions.jsx` | Post ka interactive hissa (client island): Like, Comments, Bookmark, Share. Comment button comments panel kholta/band karta hai. |
+| `like-button.jsx` ❤️ | Like/unlike. State shared store mein, isliye same post har page pe same dikhta hai. |
+| `bookmark-button.jsx` | Bookmark lagana/hatana; Bookmarks page turant badal jaata hai |
+| `comment-section.jsx` | Comments ki list (avatar, naam, time, text) + neeche form |
+| `comment-form.jsx` | Comment likhne ka form: live character count (max 300), validation, `Ctrl+Enter` se bhejna |
+| `post-menu.jsx` | "…" dropdown: Bookmark, author ka profile, Report post (dusron ke post) ya Delete post (apne post) |
+| `share-dialog.jsx` | Share dialog: post ka link aur Copy button |
+| `report-dialog.jsx` | Report form dialog: reason (radio, zaroori), details ("Something else" pe zaroori) |
+| `delete-post-dialog.jsx` | "Delete this post?" confirm (alert dialog: bahar click karke band nahi hota) |
+| `create-post.jsx` | Post likhne ka asli form, X jaisa: border-less bada text box, neeche toolbar mein `#` button (tags field kholta hai), likhte waqt hi count (max 500), gol Post button. Tags comma se (max 5), validation, `Ctrl+Enter`. Focus card ke ring se dikhta hai. Post feed mein sabse upar aata hai. |
+| `new-posts.jsx` | User ke is session ke likhe posts (client), wahi `PostCard` use karke |
+| `bookmarked-posts.jsx` | Bookmarks page pe sirf bookmarked posts dikhata hai (client filter, server-rendered cards) |
 | `post-card-skeleton.jsx` | Loading ke time post card ki jagah grey placeholder |
-| `like-button.jsx` ❤️ | `useState` se like yaad rakhta hai. Click pe dil laal aur count +1, dobara click pe wapas normal. |
-| `create-post.jsx` | "Share what you're building…" wala box. Abhi sirf design hai, Post button disabled hai kyunki API nahi bani. |
 
 ---
 
@@ -133,7 +146,7 @@ Global styling: Tailwind, theme colours aur font. Rangon ke liye neeche wala sec
 | `home-page.jsx` | "Welcome back, Jordan" + create post + feed |
 | `explore-page.jsx` | Trending topics, "Developers to follow" grid, "Popular this week" posts |
 | `bookmarks-page.jsx` | Saved posts. Kuch saved nahi hai toh "No bookmarks yet". |
-| `developer-profile-page.jsx` | Profile page: cover, avatar, naam, bio, location, joined date, followers/following/posts, skills, posts. Apna profile → "Edit profile" (abhi disabled), kisi aur ka → "Follow". Posts nahi → "No posts yet". |
+| `developer-profile-page.jsx` | Profile page, social-profile layout mein: lamba banner (3:1), bada avatar (128px) jo banner ke kinare pe latakta hai, right side pe "Edit profile" (disabled) ya "Follow", bada naam, @username, bio, role/location/joined, aur inline stats. Phir skills aur posts. |
 | `not-found-page.jsx` | "Page not found" + Home aur Explore ke buttons |
 
 `app/` ki `page.js` files patli hain aur asli design yahan hai. Isse `app/` mein sirf routing dikhti hai.
@@ -144,6 +157,7 @@ Global styling: Tailwind, theme colours aur font. Rangon ke liye neeche wala sec
 
 | File | Kya karti hai |
 |---|---|
+| `action-button.jsx` | Post ke Like/Comment/Bookmark/Share ka **ek reusable button**: icon + label/count, `active` hone pe rang aur bhara icon |
 | `page-header.jsx` | Har page ke upar title + chhota description |
 | `page-skeleton.jsx` | Loading ke time beech wale column ka skeleton (`app/loading.js` use karta hai) |
 | `empty-state.jsx` | Icon + message wala card, jab dikhane ko kuch na ho (no bookmarks, no posts, 404, error) |
@@ -156,6 +170,13 @@ Global styling: Tailwind, theme colours aur font. Rangon ke liye neeche wala sec
 
 Button, Card, Avatar, Badge, Input, Sheet, Separator, Dialog, Dropdown Menu, Skeleton. Ye shadcn/ui se aaye hain aur baaki components inhe use karte hain.
 
+Milestone 3 mein add kiye (shadcn ke style mein, koi naya package nahi):
+- `textarea.jsx`: multi-line field, Input jaisa
+- `alert-dialog.jsx`: confirm dialogs ke liye (Base UI `AlertDialog`, `role="alertdialog"`)
+- `dropdown-menu.jsx` mein `DropdownMenuLinkItem`: menu ka item jo asli link hai
+
+**Avatar ka size:** custom size (`size-24` jaisa) chahiye toh `size="lg"` mat do. `size="lg"` ki `data-[size=lg]:size-10` class plain `size-*` se strong hai aur tumhara size ignore ho jaata hai.
+
 ---
 
 ## 8. `data/` – Fake data (UI se alag)
@@ -164,6 +185,7 @@ Button, Card, Avatar, Badge, Input, Sheet, Separator, Dialog, Dropdown Menu, Ske
 |---|---|
 | `developers.js` | Saare 7 developers: naam, username, role, bio, location, skills, followers, avatar ka rang (light + `dark:` shade). Initials ab store nahi hote, avatar letter `name` se banta hai. **Baaki sab files developers ko username se refer karti hain.** |
 | `posts.js` | 3 sample posts. Har post mein bas `authorUsername` hai, poora author nahi. |
+| `comments.js` | Har post ke sample comments. Post pe dikhne wali comment ginti isi list ki lambai hai. |
 | `bookmarks.js` | Kaunse posts bookmark hain (post ids) |
 | `community.js` | Trending tech, suggested developers ke usernames, community stats |
 | `navigation.js` | Sidebar ke 4 links + unke icons. Desktop aur mobile dono yahin se lete hain. |
@@ -178,8 +200,10 @@ Button, Card, Avatar, Badge, Input, Sheet, Separator, Dialog, Dropdown Menu, Ske
 | `developers.js` | Data padhne wale functions: `getDeveloper`, `getFeedPosts`, `getPostsByDeveloper`, `getBookmarkedPosts`, `getPopularPosts`, aur `findDeveloperByParam`, jo URL ke username ko validate karta hai (sirf letters, numbers, `.`, `_`, `-`; galat encoding reject). Database aane pe sirf ye file badlegi. |
 | `paths.js` | Saare URLs ek jagah (`paths.developer("priyacodes")` → `/developers/priyacodes`), aur `isActivePath`, jo batata hai kaunsa nav link active hai |
 | `avatar.js` | `getAvatarLetter(name)`: first name ka pehla letter, capital mein. Details neeche wale section mein. |
-| `format.js` | Numbers ko short karta hai, jaise `1200` → `1.2K` |
-| `utils.js` | CSS classes jodne wala `cn` function |
+| `interactions.js` | Shared store ka **reducer** (pure function): like, follow, bookmark, comment add, post create/delete. Unit tested. |
+| `validation.js` | Forms ki validation: `validatePost`, `validateComment`, `validateReport`, `parseTags`. Har ek cleaned `values` aur `errors` lautata hai. Backend aane pe server pe bhi yahi checks chalne chahiye. |
+| `format.js` | `formatCount`: `1200` → `1.2K`. `formatNumber`: `1871` → `1,871` (profile stats, taaki follow karne pe +1 dikhe). |
+| `utils.js` | `cn` (CSS classes jodna) aur `idList` (`aria-describedby` ke liye ids jodna) |
 
 ---
 
@@ -190,7 +214,9 @@ Button, Card, Avatar, Badge, Input, Sheet, Separator, Dialog, Dropdown Menu, Ske
 | `routing.test.mjs` | Har URL ke liye `page.js` file hai; galat usernames reject hote hain; har developer ka username valid hai; active link ka logic sahi hai |
 | `avatar.test.mjs` | Avatar letter: normal naam, single naam, extra spaces, lowercase, khaali input, `ß`, alag accent, emoji, aur `Intl.Segmenter` na ho tab bhi; data mein `initials` nahi bacha |
 | `theme.test.mjs` | `globals.css` aur Tailwind ke asli colour values se **WCAG contrast** calculate karta hai: text, tags, blue accent, har component ka focus ring, like/trend colours aur har avatar |
-| `developers.test.mjs` | Data helpers sahi posts, bookmarks aur developers dete hain |
+| `developers.test.mjs` | Data helpers sahi posts, bookmarks, developers aur comments dete hain |
+| `validation.test.mjs` | Post, comment aur report forms ke saare rules: khaali, bahut lamba, galat tags, "Something else" bina details |
+| `interactions.test.mjs` | Store reducer: like/unlike, follow, bookmark, comment, apna post banana/delete karna, data ke post delete na ho paana |
 
 Chalane ke liye: `npm test` (Node ka built-in test runner, koi extra package nahi).
 
@@ -200,13 +226,16 @@ Ye tests asli Chromium browser mein app kholte hain aur user ki tarah click kart
 
 | File | Kya check karta hai |
 |---|---|
-| `fixtures.mjs` | Har test mein console error ya hydration error aaye toh test fail. Saath mein helper jo check karta hai ki navigation bina page reload ke hui. |
+| `global-setup.mjs` | Tests se pehle har route ek baar khol ke server "warm up" karta hai, taaki pehle tests cold start ki wajah se timeout na hon |
+| `fixtures.mjs` | Har test mein console error ya hydration error aaye toh test fail. Har `page.goto` ke baad React ke hydrate hone (`<html data-hydrated>`) ka wait, taaki click kho na jaaye. Navigation bina reload hui ya nahi, uska helper. |
 | `navigation.spec.mjs` | Har page direct khulta hai, sahi link active hota hai, bina reload page badalta hai, back/forward, scroll karne ke baad naya page upar se dikhta hai, layout ka state navigation mein bana rehta hai |
 | `profiles.spec.mjs` | Author, Explore cards aur suggestions se profile khulta hai; encoded username (`meilin%2Edev`); Follow vs Edit profile; "No posts yet" |
 | `not-found.spec.mjs` | Galat URLs pe 404 page + `noindex`, aur 404 page se wapas app mein jaana |
-| `interactions.spec.mjs` | Like button count badhata/ghatata hai, Follow toggle hota hai, Post button disabled hai |
+| `interactions.spec.mjs` | Like button count badhata/ghatata hai, Follow toggle hota hai, Post button text likhne pe hi enable hota hai |
+| `posts.spec.mjs` | Post likhna (validation, `Ctrl+Enter`, profile pe dikhna), apna post delete karna, comments (padhna, likhna, ginti har page pe), likes aur bookmarks pages ke beech sync, Share aur Report dialogs |
+| `follow-and-menus.spec.mjs` | Follow har jagah sync aur followers +1, hover pe "Unfollow", account menu aur post menu keyboard se |
 | `mobile.spec.mjs` | Phone size pe sidebars chhupte hain, ☰ menu khulta hai, link click pe page badalta hai aur menu band hota hai |
-| `theme.spec.mjs` | Dark theme on hai, background aur cards theme tokens se aate hain, inputs ka background sahi token se aata hai, banner pe avatar ka fill solid hai, active link brand colour mein hai, har avatar mein sirf ek letter hai |
+| `theme.spec.mjs` | Dark theme on hai, background aur cards theme tokens se aate hain, inputs ka background sahi token se aata hai, banner pe avatar ka fill solid hai, active link brand colour mein hai, har avatar mein sirf ek letter hai, profile avatar bada (96px+) aur banner pe overlap, navbar search center mein |
 
 Chalane ke liye: `npm run test:e2e`
 
@@ -280,13 +309,22 @@ Ye kaam ek hi function karta hai, `src/lib/avatar.js` ka `getAvatarLetter(name)`
 
 Jis file ke upar **`"use client"`** likha hai, wo **browser mein chalti hai**, kyunki usme click, state, menu ya current URL ki zaroorat hai:
 
-- `components/layout/nav-link.jsx` (current URL padhna: `usePathname()`)
-- `components/layout/mobile-nav.jsx` (menu khulna/band hona)
-- `components/layout/follow-button.jsx`
-- `components/feed/like-button.jsx`
+- `components/providers/interactions-provider.jsx` (shared state)
+- `components/layout/`: `nav-link`, `mobile-nav`, `follow-button`, `user-menu`
+- `components/feed/`: `post-actions`, `like-button`, `bookmark-button`, `comment-form`, `post-menu`, `share-dialog`, `report-dialog`, `delete-post-dialog`, `create-post`, `new-posts`, `bookmarked-posts`
+- `components/profile/`: `profile-stats`, `profile-posts`
 - `app/error.js` (Next.js mein error page hamesha client pe hota hai)
 
-Baaki sab **server pe ban ke aati hain**. Pehle router ki 3 client files thi, ab ek bhi nahi. 🚀
+Baaki sab **server pe ban ke aati hain**: pages, layout, `PostCard`, header, sidebars, empty states. 🚀
+
+### Server aur Client ko jodne ke 4 tareeke (component composition)
+
+1. **Client island:** `PostCard` (server) apne andar `PostActions` (client) rakhta hai aur use sirf zaroori data deta hai. Post ka baaki HTML server pe banta hai.
+2. **Server `children` client ke andar:** `InteractionsProvider` (client) poore app ko wrap karta hai, phir bhi uske `children` (pages) Server Components rehte hain. `ProfilePosts` bhi server pe bane posts ko `children` ki tarah leta hai.
+3. **Server elements props mein:** `BookmarksPage` (server) har post ka card bana ke `BookmarkedPosts` (client) ko deta hai. Client sirf decide karta hai ki kaun sa card dikhana hai.
+4. **Hook-free shared component:** `PostCard`, `ActionButton` aur `CommentSection` mein koi hook nahi, isliye server aur client dono jagah chalte hain. `NewPosts` (client) wahi `PostCard` use karta hai jo feed (server) karta hai.
+
+**Shared state kyun?** Likes, follows, bookmarks aur comments `InteractionsProvider` mein rehte hain, jo root layout mein hai aur navigation pe remount nahi hota. Isliye Home pe like karo toh Explore pe bhi liked dikhta hai. Abhi kuch save nahi hota: page reload karo toh sab reset.
 
 ---
 

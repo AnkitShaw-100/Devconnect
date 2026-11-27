@@ -13,7 +13,6 @@ function ProfileSummary() {
       <div className="-mt-7 flex flex-col items-center px-4 pb-4 text-center">
         <UserAvatar
           user={currentUser}
-          size="lg"
           className="size-14 ring-4 ring-card [&_[data-slot=avatar-fallback]]:text-base"
         />
         <Link

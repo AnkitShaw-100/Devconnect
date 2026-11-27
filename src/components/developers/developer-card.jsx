@@ -20,7 +20,7 @@ export function DeveloperCard({ developer }) {
           </Link>
           <p className="truncate text-xs text-muted-foreground">{developer.role}</p>
         </div>
-        <FollowButton name={developer.name} />
+        <FollowButton username={developer.username} name={developer.name} />
       </div>
       <ul className="flex flex-wrap gap-1.5" aria-label={`${developer.name}'s skills`}>
         {developer.skills.slice(0, 3).map((skill) => (

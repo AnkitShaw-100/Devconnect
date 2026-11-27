@@ -3,21 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/layout/logo";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { SearchBar } from "@/components/layout/search-bar";
-import Link from "next/link";
-import { UserAvatar } from "@/components/shared/user-avatar";
+import { UserMenu } from "@/components/layout/user-menu";
 import { currentUser } from "@/data/current-user";
-import { paths } from "@/lib/paths";
 
 export function Navbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-4 sm:px-6">
-        <MobileNav />
-        <Logo />
+      {/* From md up: equal side columns keep the search bar centred in the navbar. */}
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-4 sm:px-6 md:grid md:grid-cols-[1fr_minmax(0,28rem)_1fr] md:gap-6">
+        <div className="flex items-center gap-2">
+          <MobileNav />
+          <Logo />
+        </div>
 
-        <SearchBar className="ml-6 hidden w-full max-w-md md:block" />
+        <SearchBar className="hidden w-full md:block" />
 
-        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+        <div className="ml-auto flex items-center justify-end gap-1 sm:gap-2">
           <Button
             variant="ghost"
             size="icon-lg"
@@ -30,13 +31,7 @@ export function Navbar() {
               aria-hidden="true"
             />
           </Button>
-          <Link
-            href={paths.profile}
-            aria-label="Your profile"
-            className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring"
-          >
-            <UserAvatar user={currentUser} className="size-9" />
-          </Link>
+          <UserMenu user={currentUser} />
         </div>
       </div>
     </header>

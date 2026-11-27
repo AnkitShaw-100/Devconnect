@@ -94,6 +94,26 @@ function DropdownMenuItem({
   )
 }
 
+// A menu item that is a real link (renders <a>; pass a Next.js <Link> via
+// `render` for client-side navigation). Same look as DropdownMenuItem.
+function DropdownMenuLinkItem({
+  className,
+  closeOnClick = true,
+  ...props
+}) {
+  return (
+    <MenuPrimitive.LinkItem
+      data-slot="dropdown-menu-item"
+      closeOnClick={closeOnClick}
+      className={cn(
+        "group/dropdown-menu-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
 function DropdownMenuSub({
   ...props
 }) {
@@ -246,6 +266,7 @@ function DropdownMenuShortcut({
 }
 
 export {
+  DropdownMenuLinkItem,
   DropdownMenu,
   DropdownMenuPortal,
   DropdownMenuTrigger,

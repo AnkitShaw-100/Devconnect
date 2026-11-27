@@ -16,6 +16,16 @@ export const test = base.extend({
     });
     page.on("pageerror", (error) => record(error.message));
 
+    // Wait for hydration after every navigation: a click on a server-rendered
+    // button before React attaches its handlers does nothing, which made
+    // tests flaky on a busy machine. The app sets <html data-hydrated>.
+    const goto = page.goto.bind(page);
+    page.goto = async (...args) => {
+      const response = await goto(...args);
+      await page.waitForSelector("html[data-hydrated]", { state: "attached" });
+      return response;
+    };
+
     await runTest(page);
 
     expect(errors, "console errors on the page").toEqual([]);

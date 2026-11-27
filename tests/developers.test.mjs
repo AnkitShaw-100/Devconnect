@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   getAllDevelopers,
   getBookmarkedPosts,
+  getCommentsForPost,
   getDeveloper,
   getFeedPosts,
   getOtherDevelopers,
@@ -12,6 +13,7 @@ import {
   isCurrentUser,
 } from "../src/lib/developers.js";
 import { currentUser, currentUsername } from "../src/data/current-user.js";
+import { commentsByPostId } from "../src/data/comments.js";
 
 test("developer usernames are unique", () => {
   const usernames = getAllDevelopers().map((developer) => developer.username);
@@ -65,4 +67,24 @@ test("popular posts are sorted by likes and limited", () => {
   assert.equal(popular.length, 2);
   assert.ok(popular[0].likes >= popular[1].likes);
   assert.equal(popular[0].id, "post-2");
+});
+
+test("feed posts carry their comments, with authors, oldest first", () => {
+  const [first] = getFeedPosts();
+  assert.equal(first.id, "post-1");
+  assert.ok(first.comments.length > 0);
+  for (const comment of first.comments) {
+    assert.ok(comment.author, `${comment.id} has no author`);
+    assert.equal(comment.author.username, comment.authorUsername);
+  }
+});
+
+test("comments data only references known posts and developers", () => {
+  for (const [postId, comments] of Object.entries(commentsByPostId)) {
+    assert.ok(getFeedPosts().some((post) => post.id === postId), `unknown post ${postId}`);
+    for (const comment of comments) {
+      assert.ok(getDeveloper(comment.authorUsername), `unknown author in ${comment.id}`);
+    }
+  }
+  assert.deepEqual(getCommentsForPost("no-such-post"), []);
 });

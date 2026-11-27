@@ -1,79 +1,82 @@
-import { Ellipsis, MessageCircle, Share2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { LikeButton } from "@/components/feed/like-button";
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
+import { PostActions } from "@/components/feed/post-actions";
+import { PostMenu } from "@/components/feed/post-menu";
 import { TechTag } from "@/components/shared/tech-tag";
 import { UserAvatar } from "@/components/shared/user-avatar";
-import { formatCount } from "@/lib/format";
 import { paths } from "@/lib/paths";
 
-export function PostCard({ post }) {
+/*
+ * A post is composed of small parts. The static ones (header, body, tags)
+ * have no hooks, so they render on the server; the interactive ones
+ * (PostMenu, PostActions) are Client Component islands. PostCard has no
+ * hooks either, so a Client Component can render it too (see NewPosts),
+ * for posts that only exist in the browser.
+ */
+
+function PostHeader({ post, canDelete }) {
   const { author } = post;
+  const profile = paths.developer(author.username);
 
   return (
-    <Card className="gap-0 py-0 shadow-xs">
-      <article>
-        <header className="flex items-start gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
-          <Link
-            href={paths.developer(author.username)}
-            className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring"
-            tabIndex={-1}
-            aria-hidden="true"
-          >
-            <UserAvatar user={author} size="lg" />
-          </Link>
-          <div className="min-w-0 flex-1">
-            <Link
-              href={paths.developer(author.username)}
-              className="block truncate font-semibold text-foreground hover:underline focus-visible:underline focus-visible:outline-none"
-            >
-              {author.name}
-            </Link>
-            <p className="truncate text-xs text-muted-foreground">
-              @{author.username} · {author.role}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              <time>{post.timestamp}</time>
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="text-muted-foreground"
-            aria-label="More options"
-          >
-            <Ellipsis />
-          </Button>
-        </header>
+    <header className="flex items-start gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
+      {/* Decorative duplicate of the name link: hidden from keyboard and screen readers. */}
+      <Link href={profile} tabIndex={-1} aria-hidden="true" className="rounded-full">
+        <UserAvatar user={author} size="lg" />
+      </Link>
+      <div className="min-w-0 flex-1">
+        <Link
+          href={profile}
+          className="block truncate font-semibold text-foreground hover:underline focus-visible:underline focus-visible:outline-none"
+        >
+          {author.name}
+        </Link>
+        <p className="truncate text-xs text-muted-foreground">
+          @{author.username} · {author.role}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          <time>{post.timestamp}</time>
+        </p>
+      </div>
+      <PostMenu post={post} canDelete={canDelete} />
+    </header>
+  );
+}
 
-        <div className="px-4 pt-3 sm:px-5">
-          <p className="text-[15px] leading-relaxed text-foreground">{post.content}</p>
-          <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Technologies">
-            {post.tags.map((tag) => (
-              <li key={tag}>
-                <TechTag>{tag}</TechTag>
-              </li>
-            ))}
-          </ul>
-        </div>
+function PostTags({ tags }) {
+  if (!tags.length) return null;
+  return (
+    <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Technologies">
+      {tags.map((tag) => (
+        <li key={tag}>
+          <TechTag>{tag}</TechTag>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
-        <footer className="mt-4 flex items-center gap-1 border-t border-border px-2 py-1.5 sm:px-3">
-          <LikeButton initialLikes={post.likes} initialLiked={post.likedByMe} />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground"
-            aria-label={`${post.comments} comments`}
-          >
-            <MessageCircle />
-            <span className="tabular-nums">{formatCount(post.comments)}</span>
-          </Button>
-          <Button variant="ghost" size="sm" className="ml-auto text-muted-foreground">
-            <Share2 />
-            Share
-          </Button>
-        </footer>
+function PostBody({ post }) {
+  return (
+    <div className="px-4 pt-3 sm:px-5">
+      <p className="text-[15px] leading-relaxed break-words whitespace-pre-line text-foreground">
+        {post.content}
+      </p>
+      <PostTags tags={post.tags} />
+    </div>
+  );
+}
+
+export function PostCard({ post }) {
+  // Only posts the user wrote in this session can be deleted.
+  const canDelete = Boolean(post.createdLocally);
+
+  return (
+    <Card className="scroll-mt-20 gap-0 py-0 shadow-xs" id={post.id}>
+      <article aria-label={`Post by ${post.author.name}`}>
+        <PostHeader post={post} canDelete={canDelete} />
+        <PostBody post={post} />
+        <PostActions post={post} />
       </article>
     </Card>
   );

@@ -6,6 +6,7 @@ const baseURL = `http://localhost:${PORT}`;
 // End-to-end tests run against a production build, the same code users get.
 export default defineConfig({
   testDir: "./e2e",
+  globalSetup: "./e2e/global-setup.mjs",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

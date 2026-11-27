@@ -1,6 +1,7 @@
 // Read helpers over the dummy data. When a database arrives, these become the
 // data-access layer and the components that call them stay unchanged.
 import { bookmarkedPostIds } from "../data/bookmarks.js";
+import { commentsByPostId } from "../data/comments.js";
 import { suggestedDeveloperUsernames } from "../data/community.js";
 import { currentUsername } from "../data/current-user.js";
 import { developers } from "../data/developers.js";
@@ -50,10 +51,23 @@ export function isCurrentUser(username) {
   return username === currentUsername;
 }
 
-// Attach the author record to each post; posts with unknown authors are dropped.
+// Comments for a post with their authors attached, oldest first.
+// Comments by unknown authors are dropped.
+export function getCommentsForPost(postId) {
+  return (commentsByPostId[postId] ?? [])
+    .map((comment) => ({ ...comment, author: getDeveloper(comment.authorUsername) }))
+    .filter((comment) => comment.author);
+}
+
+// Attach the author and comments to each post; posts with unknown authors
+// are dropped.
 function withAuthors(list) {
   return list
-    .map((post) => ({ ...post, author: getDeveloper(post.authorUsername) }))
+    .map((post) => ({
+      ...post,
+      author: getDeveloper(post.authorUsername),
+      comments: getCommentsForPost(post.id),
+    }))
     .filter((post) => post.author);
 }
 

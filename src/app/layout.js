@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/layout/app-shell";
+import { InteractionsProvider } from "@/components/providers/interactions-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,8 +26,11 @@ export default function RootLayout({ children }) {
       className={`dark scheme-dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background">
-        {/* The shell stays mounted across navigations; only `children` changes. */}
-        <AppShell>{children}</AppShell>
+        {/* The shell stays mounted across navigations; only `children` changes.
+            The provider shares likes, follows, comments and new posts app-wide. */}
+        <InteractionsProvider>
+          <AppShell>{children}</AppShell>
+        </InteractionsProvider>
       </body>
     </html>
   );

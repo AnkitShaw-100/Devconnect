@@ -1,4 +1,4 @@
-import { CalendarDays, FileText, MapPin, Pencil } from "lucide-react";
+import { BriefcaseBusiness, CalendarDays, FileText, MapPin, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PostCard } from "@/components/feed/post-card";
@@ -6,51 +6,51 @@ import { FollowButton } from "@/components/layout/follow-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { TechTag } from "@/components/shared/tech-tag";
 import { UserAvatar } from "@/components/shared/user-avatar";
-import { formatCount } from "@/lib/format";
+import { ProfilePosts } from "@/components/profile/profile-posts";
+import { ProfileStats } from "@/components/profile/profile-stats";
 import { getDeveloper, getPostsByDeveloper, isCurrentUser } from "@/lib/developers";
 
+// Profile header in the familiar social-profile layout: a wide banner, a
+// large avatar overlapping its bottom edge, the main action on the right,
+// then name, handle, bio, details and inline stats.
 function ProfileHeader({ developer, postCount, isOwnProfile }) {
-  const stats = [
-    { label: "Followers", value: developer.followers },
-    { label: "Following", value: developer.following },
-    { label: "Posts", value: postCount },
-  ];
-
   return (
     <Card className="gap-0 py-0 shadow-xs">
-      <div className="h-24 bg-muted sm:h-28" />
+      <div data-slot="profile-banner" className="aspect-[3/1] max-h-52 w-full bg-muted" aria-hidden="true" />
       <div className="px-4 pb-5 sm:px-6">
-        <div className="-mt-10 flex items-end justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <UserAvatar
             user={developer}
-            size="lg"
-            className="size-20 ring-4 ring-card [&_[data-slot=avatar-fallback]]:text-2xl"
+            className="-mt-12 size-24 ring-4 ring-card sm:-mt-16 sm:size-32 [&_[data-slot=avatar-fallback]]:text-4xl sm:[&_[data-slot=avatar-fallback]]:text-5xl"
           />
-          {isOwnProfile ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full"
-              disabled
-              title="Profile editing arrives in a later milestone"
-            >
-              <Pencil />
-              Edit profile
-            </Button>
-          ) : (
-            <FollowButton name={developer.name} />
-          )}
+          <div className="pt-3">
+            {isOwnProfile ? (
+              <Button
+                variant="outline"
+                className="h-9 rounded-full px-4 font-semibold"
+                disabled
+                title="Profile editing arrives in a later milestone"
+              >
+                <Pencil />
+                Edit profile
+              </Button>
+            ) : (
+              <FollowButton username={developer.username} name={developer.name} />
+            )}
+          </div>
         </div>
 
-        <h1 className="mt-3 text-xl font-semibold tracking-tight text-foreground">
+        <h1 className="mt-3 text-xl leading-tight font-bold tracking-tight text-foreground sm:text-2xl">
           {developer.name}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          @{developer.username} · {developer.role}
-        </p>
+        <p className="text-[15px] text-muted-foreground">@{developer.username}</p>
         <p className="mt-3 text-[15px] leading-relaxed text-foreground">{developer.bio}</p>
 
-        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[15px] text-muted-foreground">
+          <li className="flex items-center gap-1.5">
+            <BriefcaseBusiness className="size-4" aria-hidden="true" />
+            {developer.role}
+          </li>
           <li className="flex items-center gap-1.5">
             <MapPin className="size-4" aria-hidden="true" />
             {developer.location}
@@ -61,16 +61,13 @@ function ProfileHeader({ developer, postCount, isOwnProfile }) {
           </li>
         </ul>
 
-        <dl className="mt-4 flex gap-6">
-          {stats.map((stat) => (
-            <div key={stat.label} className="flex flex-col-reverse">
-              <dt className="text-xs text-muted-foreground">{stat.label}</dt>
-              <dd className="font-semibold text-foreground tabular-nums">
-                {formatCount(stat.value)}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <ProfileStats
+          username={developer.username}
+          followers={developer.followers}
+          following={developer.following}
+          postCount={postCount}
+          isOwnProfile={isOwnProfile}
+        />
       </div>
     </Card>
   );
@@ -112,23 +109,25 @@ export function DeveloperProfilePage({ username }) {
         <h2 id="profile-posts" className="px-1 font-semibold text-foreground">
           Posts
         </h2>
-        {posts.length > 0 ? (
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            icon={FileText}
-            title="No posts yet"
-            description={
-              isOwnProfile
-                ? "Share what you're working on and it will show up here."
-                : `${developer.name.split(" ")[0]} hasn't posted anything yet.`
-            }
-          />
-        )}
+        <ProfilePosts
+          isOwnProfile={isOwnProfile}
+          serverPostCount={posts.length}
+          emptyState={
+            <EmptyState
+              icon={FileText}
+              title="No posts yet"
+              description={
+                isOwnProfile
+                  ? "Share what you're working on and it will show up here."
+                  : `${developer.name.split(" ")[0]} hasn't posted anything yet.`
+              }
+            />
+          }
+        >
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </ProfilePosts>
       </section>
     </div>
   );

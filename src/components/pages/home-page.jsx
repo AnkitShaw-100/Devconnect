@@ -1,4 +1,5 @@
 import { CreatePost } from "@/components/feed/create-post";
+import { NewPosts } from "@/components/feed/new-posts";
 import { PostCard } from "@/components/feed/post-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { currentUser } from "@/data/current-user";
@@ -16,6 +17,8 @@ export function HomePage() {
       />
       <CreatePost user={currentUser} />
       <section aria-label="Feed" className="space-y-4">
+        {/* Posts written in this session (client), then the server-rendered feed. */}
+        <NewPosts />
         {posts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))}

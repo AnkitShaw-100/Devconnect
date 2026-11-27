@@ -63,7 +63,7 @@ function SuggestedDevelopersCard() {
                 </Link>
                 <p className="truncate text-xs text-muted-foreground">{dev.role}</p>
               </div>
-              <FollowButton name={dev.name} />
+              <FollowButton username={dev.username} name={dev.name} />
             </li>
           ))}
         </ul>

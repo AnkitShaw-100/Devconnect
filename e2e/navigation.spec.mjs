@@ -65,10 +65,12 @@ test("browser back and forward buttons move between routes", async ({ page }) =>
   );
 });
 
-test("logo and navbar avatar link home and to the profile", async ({ page }) => {
+test("logo links home and the account menu links to the profile", async ({ page }) => {
   await page.goto("/explore");
 
-  await page.getByRole("link", { name: "Your profile" }).click();
+  // The navbar avatar opens the account menu (Milestone 3) instead of linking directly.
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("menuitem", { name: "My profile" }).click();
   await expect(page).toHaveURL("/profile");
 
   await page.getByRole("link", { name: "DevConnect home" }).click();

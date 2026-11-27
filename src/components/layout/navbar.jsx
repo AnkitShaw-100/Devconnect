@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/layout/logo";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { SearchBar } from "@/components/layout/search-bar";
+import { RouterLink } from "@/components/router/router-links";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { currentUser } from "@/data/current-user";
+import { paths } from "@/lib/paths";
 
 export function Navbar() {
   return (
@@ -28,7 +30,13 @@ export function Navbar() {
               aria-hidden="true"
             />
           </Button>
-          <UserAvatar user={currentUser} className="size-9" />
+          <RouterLink
+            to={paths.profile}
+            aria-label="Your profile"
+            className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <UserAvatar user={currentUser} className="size-9" />
+          </RouterLink>
         </div>
       </div>
     </header>

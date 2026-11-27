@@ -1,12 +1,11 @@
 import { TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FollowButton } from "@/components/layout/follow-button";
+import { RouterLink } from "@/components/router/router-links";
 import { UserAvatar } from "@/components/shared/user-avatar";
-import {
-  communityStats,
-  suggestedDevelopers,
-  trendingTechnologies,
-} from "@/data/community";
+import { communityStats, trendingTechnologies } from "@/data/community";
+import { getSuggestedDevelopers } from "@/lib/developers";
+import { paths } from "@/lib/paths";
 
 const cardClass = "gap-3 shadow-xs ring-neutral-200";
 
@@ -52,11 +51,16 @@ function SuggestedDevelopersCard() {
       </CardHeader>
       <CardContent>
         <ul className="space-y-4">
-          {suggestedDevelopers.map((dev) => (
+          {getSuggestedDevelopers().map((dev) => (
             <li key={dev.username} className="flex items-center gap-3">
               <UserAvatar user={dev} size="lg" />
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-neutral-900">{dev.name}</p>
+                <RouterLink
+                  to={paths.developer(dev.username)}
+                  className="block truncate font-medium text-neutral-900 hover:underline focus-visible:underline focus-visible:outline-none"
+                >
+                  {dev.name}
+                </RouterLink>
                 <p className="truncate text-xs text-neutral-500">{dev.role}</p>
               </div>
               <FollowButton name={dev.name} />

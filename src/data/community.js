@@ -7,29 +7,7 @@ export const trendingTechnologies = [
   { name: "TypeScript", posts: "5.1k posts", change: "+4%" },
 ];
 
-export const suggestedDevelopers = [
-  {
-    name: "Sofia Martins",
-    username: "sofiabuilds",
-    initials: "SM",
-    role: "iOS engineer",
-    avatarColor: "bg-violet-100 text-violet-700",
-  },
-  {
-    name: "Arjun Mehta",
-    username: "arjunml",
-    initials: "AM",
-    role: "ML engineer",
-    avatarColor: "bg-sky-100 text-sky-700",
-  },
-  {
-    name: "Lena Fischer",
-    username: "lenaf",
-    initials: "LF",
-    role: "Security researcher",
-    avatarColor: "bg-teal-100 text-teal-700",
-  },
-];
+export const suggestedDeveloperUsernames = ["sofiabuilds", "arjunml", "lenaf"];
 
 export const communityStats = [
   { label: "Developers", value: "48.2k" },

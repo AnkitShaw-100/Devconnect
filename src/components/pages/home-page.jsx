@@ -1,21 +1,19 @@
 import { CreatePost } from "@/components/feed/create-post";
 import { PostCard } from "@/components/feed/post-card";
+import { PageHeader } from "@/components/shared/page-header";
 import { currentUser } from "@/data/current-user";
-import { posts } from "@/data/posts";
+import { getFeedPosts } from "@/lib/developers";
 
 export function HomePage() {
   const firstName = currentUser.name.split(" ")[0];
+  const posts = getFeedPosts();
 
   return (
     <div className="space-y-4">
-      <div className="px-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
-          Welcome back, {firstName}
-        </h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Catch up on what developers in your network are shipping.
-        </p>
-      </div>
+      <PageHeader
+        title={`Welcome back, ${firstName}`}
+        description="Catch up on what developers in your network are shipping."
+      />
       <CreatePost user={currentUser} />
       <section aria-label="Feed" className="space-y-4">
         {posts.map((post) => (

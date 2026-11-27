@@ -1,24 +1,40 @@
 # DevConnect – `src` Folder Structure
 
-Milestone 1 (Homepage Foundation) mein `src` folder ke andar kya hai aur kaunsi file kya karti hai, iska simple guide.
+`src` folder ke andar kya hai aur kaunsi file kya karti hai, iska simple guide. (Milestone 2: Routing and page structure tak updated.)
 
 ## Overall structure
 
 ```
 src/
-├── app/            → Next.js ke pages (URL yahin se aata hai)
-├── components/     → UI ke saare chhote-bade tukde
-│   ├── router/     → React Router wala setup
-│   ├── layout/     → Navbar, sidebars, poora dhaancha
-│   ├── feed/       → Posts aur post likhne wala card
-│   ├── pages/      → Har route ka page (Home, Explore...)
-│   ├── shared/     → Baar-baar use hone wale chhote components
-│   └── ui/         → shadcn ke components
-├── data/           → Dummy data (fake posts, users)
-└── lib/            → Helper functions
+├── app/              → Next.js ke pages, 404, loading aur error (URL yahin se aata hai)
+├── components/       → UI ke saare chhote-bade tukde
+│   ├── router/       → React Router wala setup
+│   ├── layout/       → Navbar, sidebars, poora dhaancha
+│   ├── feed/         → Posts aur post likhne wala card
+│   ├── developers/   → Developer cards (Explore page ke liye)
+│   ├── pages/        → Har route ka page (Home, Explore, Profile...)
+│   ├── shared/       → Baar-baar use hone wale chhote components
+│   └── ui/           → shadcn ke components
+├── data/             → Dummy data (fake posts, developers)
+└── lib/              → Helpers: data padhna, URLs, route check
+
+tests/                → Unit tests (src ke bahar, project root mein)
 ```
 
-Ek line mein: **`data` mein content hai, `components` mein design hai, `app` dono ko jodta hai.**
+Ek line mein: **`data` mein content hai, `lib` usse padhta hai, `components` mein design hai, `app` sabko jodta hai.**
+
+---
+
+## Routes (kaunsa URL, kaunsa page)
+
+| URL | Page |
+|---|---|
+| `/` | Home feed |
+| `/explore` | Explore: trending topics, developers, popular posts |
+| `/bookmarks` | Saved posts |
+| `/profile` | Aapka apna profile (Jordan Lee) |
+| `/developers/:username` | Kisi bhi developer ka profile, jaise `/developers/priyacodes` |
+| Baaki sab | Page not found (404) |
 
 ---
 
@@ -26,10 +42,23 @@ Ek line mein: **`data` mein content hai, `components` mein design hai, `app` don
 
 ### `app/[[...slug]]/page.js` ⭐ (sabse important file)
 
-- Folder ka naam `[[...slug]]` ka matlab hai **"koi bhi URL ho, isi page pe aao"**. `/`, `/explore`, `/profile`, `/kuch/bhi` sab yahin aate hain.
-- Ye file URL padhti hai (jaise `/explore`) aur React Router ko de deti hai.
-- Saare pages (Home, Explore, etc.) yahin se banake router ko pass karti hai.
-- `generateStaticParams` batata hai ki build ke time pe 4 pages (`/`, `/explore`, `/bookmarks`, `/profile`) pehle se ready rakh lo, taaki fast khulein.
+- Folder ka naam `[[...slug]]` ka matlab hai **"koi bhi URL ho, isi page pe aao"**.
+- Ye file URL padhti hai aur `resolveRoute` se check karti hai ki wo page exist karta hai ya nahi.
+  - Exist karta hai → `RouteTree` render hota hai.
+  - Nahi karta (jaise `/settings` ya `/developers/nobody`) → `notFound()` call hota hai aur 404 page dikhta hai.
+- `generateStaticParams` build ke time pe saare known pages (4 main pages + har developer ka profile) pehle se ready rakh leta hai, taaki fast khulein.
+
+### `app/[[...slug]]/loading.js`
+
+Jab koi page server pe ban raha ho, tab skeleton (grey placeholder boxes) dikhata hai. App ke andar link click karne pe ye nahi dikhta, kyunki wo navigation browser mein turant hoti hai.
+
+### `app/[[...slug]]/error.js`
+
+Agar page banate waqt koi error aa jaye, toh "Something went wrong" card dikhata hai, saath mein **Try again** aur **Go to home** buttons. Error ki details sirf console mein jaati hain, user ko nahi dikhti.
+
+### `app/not-found.js`
+
+404 page. Ye bhi poora app (navbar, sidebars) dikhata hai, beech mein "Page not found" ke saath, taaki user wahan se kahin bhi ja sake.
 
 ### `app/layout.js`
 
@@ -43,30 +72,12 @@ Global styling: Tailwind, shadcn theme colors aur font.
 
 ## 2. `components/router/` – Navigation ka dimaag
 
-### `app-router.jsx`
-
-- Server pe `StaticRouter` use karta hai, kyunki server pe browser hota hi nahi.
-- Browser mein `BrowserRouter` use karta hai.
-- Dono same cheez dikhate hain, isliye page smoothly load hota hai.
-
-### `app-routes.jsx`
-
-Yahan likha hai ki kaunsa URL, kaunsa page:
-
-| URL | Page |
+| File | Kya karti hai |
 |---|---|
-| `/` | Home |
-| `/explore` | Explore |
-| `/bookmarks` | Bookmarks |
-| `/profile` | My Profile |
-| Baaki sab | Page not found |
-
-Saath mein `ScrollToTop` hai, jo page badalne pe upar scroll kar deta hai.
-
-### `router-links.jsx`
-
-- `SidebarNavLink`: sidebar ka link. Jis page pe ho, wo **blue highlight** ho jaata hai (active state).
-- `RouterLink`: simple link, jaise logo pe click karke Home jaana.
+| `route-tree.jsx` | Ek URL ke liye poora app jodti hai: router + layout + saare pages. `page.js` aur `not-found.js` dono isi ko use karte hain. |
+| `app-router.jsx` | Server pe `StaticRouter`, browser mein `BrowserRouter`. Dono same cheez dikhate hain, isliye page smoothly load hota hai. |
+| `app-routes.jsx` | URL → page wali list (upar wali table). `/developers/:username` ke liye `DeveloperRoute` sahi profile chunta hai, ya 404 dikhata hai. Saath mein `ScrollToTop`, jo page badalne pe upar scroll karta hai. |
+| `router-links.jsx` | `SidebarNavLink`: sidebar ka link, jis page pe ho wo **blue highlight** hota hai (active state). `RouterLink`: simple link, jaise naam ya avatar pe click karke profile kholna. |
 
 ---
 
@@ -74,13 +85,14 @@ Saath mein `ScrollToTop` hai, jo page badalne pe upar scroll kar deta hai.
 
 | File | Kya karti hai |
 |---|---|
-| `app-shell.jsx` | 3-column layout banati hai: left sidebar, beech mein feed, right sidebar. Mobile pe sirf beech wala dikhta hai. |
-| `navbar.jsx` | Upar ki bar: logo, search, notification bell, avatar |
+| `app-shell.jsx` | 3-column layout: left sidebar, beech mein content, right sidebar. Mobile pe sirf beech wala dikhta hai. |
+| `app-shell-skeleton.jsx` | Loading ke time wala layout: same shape, bas grey boxes |
+| `navbar.jsx` | Upar ki bar: logo, search, notification bell, avatar (avatar click → `/profile`) |
 | `logo.jsx` | Blue box wala `</>` icon + "DevConnect" naam |
 | `search-bar.jsx` | Search box with search icon |
 | `mobile-nav.jsx` | Mobile pe ☰ button, jo left se menu slide karke kholta hai. Link click karo toh band ho jaata hai. |
-| `sidebar.jsx` | Left side: profile card + Home/Explore/Bookmarks/Profile links |
-| `right-sidebar.jsx` | Right side ke 3 cards: Trending technologies, Suggested developers, Community stats |
+| `sidebar.jsx` | Left side: profile card (naam click → `/profile`) + Home/Explore/Bookmarks/Profile links |
+| `right-sidebar.jsx` | Right side ke 3 cards: Trending technologies, Suggested developers (naam click → unka profile), Community stats |
 | `follow-button.jsx` | "Follow" button, click pe "Following" ban jaata hai |
 
 ---
@@ -89,56 +101,83 @@ Saath mein `ScrollToTop` hai, jo page badalne pe upar scroll kar deta hai.
 
 | File | Kya karti hai |
 |---|---|
-| `post-card.jsx` | Ek post ka card: avatar, naam, @username, time, content, tags, aur neeche Like / Comment / Share buttons |
-| `like-button.jsx` ❤️ | `useState` se like ka state yaad rakhta hai. Click pe dil laal aur count +1, dobara click pe wapas normal. |
+| `post-card.jsx` | Ek post ka card: avatar, naam (click → author ka profile), @username, time, content, tags, aur Like / Comment / Share buttons |
+| `post-card-skeleton.jsx` | Loading ke time post card ki jagah grey placeholder |
+| `like-button.jsx` ❤️ | `useState` se like yaad rakhta hai. Click pe dil laal aur count +1, dobara click pe wapas normal. |
 | `create-post.jsx` | "Share what you're building…" wala box. Abhi sirf design hai, Post button disabled hai kyunki API nahi bani. |
 
 ---
 
-## 5. `components/pages/` – Har route ka content
+## 5. `components/developers/`
 
 | File | Kya karti hai |
 |---|---|
-| `home-page.jsx` | "Welcome back, Jordan" + create post + 3 posts |
-| `route-pages.jsx` | Explore, Bookmarks, Profile aur Not Found pages |
-| `placeholder-page.jsx` | In placeholder pages ka common design (icon + title + message). Ek baar banaya, 4 jagah use kiya. |
+| `developer-card.jsx` | Chhota developer card: avatar, naam (click → profile), role, top 3 skills, Follow button. Explore page pe grid mein dikhta hai. |
 
 ---
 
-## 6. `components/shared/` – Reusable chhote parts
+## 6. `components/pages/` – Har route ka content
 
 | File | Kya karti hai |
 |---|---|
+| `home-page.jsx` | "Welcome back, Jordan" + create post + feed |
+| `explore-page.jsx` | Trending topics, "Developers to follow" grid, "Popular this week" posts |
+| `bookmarks-page.jsx` | Saved posts. Kuch saved nahi hai toh "No bookmarks yet" dikhata hai. |
+| `developer-profile-page.jsx` | Profile page: cover, avatar, naam, bio, location, joined date, followers/following/posts, skills, aur posts. Apna profile ho toh "Edit profile" (abhi disabled), kisi aur ka ho toh "Follow". Posts nahi hain toh "No posts yet". |
+| `not-found-page.jsx` | "Page not found" + Home aur Explore ke buttons |
+
+---
+
+## 7. `components/shared/` – Reusable chhote parts
+
+| File | Kya karti hai |
+|---|---|
+| `page-header.jsx` | Har page ke upar title + chhota description |
+| `empty-state.jsx` | Icon + message wala card, jab dikhane ko kuch na ho (no bookmarks, no posts, 404, error) |
 | `user-avatar.jsx` | Gol avatar jisme initials hote hain (jaise "PR"). Photo nahi hai, isliye rangeen initials dikhte hain. |
 | `tech-tag.jsx` | `#React`, `#DevOps` jaise chhote tags |
 
 ---
 
-## 7. `components/ui/` – shadcn components
+## 8. `components/ui/` – shadcn components
 
 Button, Card, Avatar, Badge, Input, Sheet, Separator, Dialog, Dropdown Menu, Skeleton. Ye shadcn/ui se aaye hain aur baaki components inhe use karte hain.
 
 ---
 
-## 8. `data/` – Fake data (UI se alag)
+## 9. `data/` – Fake data (UI se alag)
 
 | File | Kya hai |
 |---|---|
-| `posts.js` | 3 sample posts (Priya, Daniel, Mei) |
-| `community.js` | Trending tech, suggested developers, community stats |
+| `developers.js` | Saare 7 developers: naam, username, role, bio, location, skills, followers. **Baaki sab files developers ko username se refer karti hain.** |
+| `posts.js` | 3 sample posts. Har post mein bas `authorUsername` hai, poora author nahi. |
+| `bookmarks.js` | Kaunse posts bookmark hain (post ids) |
+| `community.js` | Trending tech, suggested developers ke usernames, community stats |
 | `navigation.js` | Sidebar ke 4 links + unke icons. Desktop aur mobile dono yahin se lete hain. |
 | `current-user.js` | Logged-in user "Jordan Lee" (abhi fake) |
 
-**Fayda:** baad mein database aayega toh sirf ye data badlega, UI wale components waise hi rahenge.
-
 ---
 
-## 9. `lib/` – Helpers
+## 10. `lib/` – Helpers
 
 | File | Kya karti hai |
 |---|---|
-| `utils.js` | CSS classes jodne wala `cn` function |
+| `developers.js` | Data padhne wale functions: `getDeveloper`, `getFeedPosts`, `getPostsByDeveloper`, `getBookmarkedPosts`, `getPopularPosts`, etc. Database aane pe sirf ye file badlegi, components nahi. |
+| `routes.js` | `resolveRoute`: server pe check karta hai ki URL valid hai ya nahi. Username ka format bhi check karta hai (sirf letters, numbers, `.`, `_`, `-`). |
+| `paths.js` | Saare URLs ek jagah, jaise `paths.developer("priyacodes")` → `/developers/priyacodes` |
 | `format.js` | Numbers ko short karta hai, jaise `1200` → `1.2K` |
+| `utils.js` | CSS classes jodne wala `cn` function |
+
+---
+
+## 11. `tests/` – Unit tests (project root mein)
+
+| File | Kya check karta hai |
+|---|---|
+| `routes.test.mjs` | Sahi URLs resolve hote hain; galat pages, unknown developers aur ajeeb usernames reject hote hain |
+| `developers.test.mjs` | Data helpers sahi posts, bookmarks aur developers dete hain |
+
+Chalane ke liye: `npm test` (Node ka built-in test runner, koi extra package nahi).
 
 ---
 
@@ -152,5 +191,6 @@ Jis file ke upar **`"use client"`** likha hai, wo **browser mein chalti hai**, k
 - `components/feed/like-button.jsx`
 - `components/layout/follow-button.jsx`
 - `components/layout/mobile-nav.jsx`
+- `app/[[...slug]]/error.js` (Next.js mein error page hamesha client pe hota hai)
 
 Baaki sab **server pe ban ke aati hain**, isliye page fast load hota hai. 🚀

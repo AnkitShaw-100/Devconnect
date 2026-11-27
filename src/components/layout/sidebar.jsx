@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
-import { SidebarNavLink } from "@/components/router/router-links";
+import { RouterLink, SidebarNavLink } from "@/components/router/router-links";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { currentUser } from "@/data/current-user";
 import { primaryNav } from "@/data/navigation";
+import { paths } from "@/lib/paths";
 
 function ProfileSummary() {
   return (
@@ -14,7 +15,12 @@ function ProfileSummary() {
           size="lg"
           className="size-14 ring-4 ring-white [&_[data-slot=avatar-fallback]]:text-base"
         />
-        <p className="mt-2 font-semibold text-neutral-900">{currentUser.name}</p>
+        <RouterLink
+          to={paths.profile}
+          className="mt-2 font-semibold text-neutral-900 hover:underline focus-visible:underline focus-visible:outline-none"
+        >
+          {currentUser.name}
+        </RouterLink>
         <p className="text-xs text-neutral-500">{currentUser.role}</p>
       </div>
       <dl className="grid grid-cols-2 border-t border-neutral-100 text-center">

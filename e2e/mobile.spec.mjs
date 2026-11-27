@@ -41,3 +41,26 @@ test("profile pages fit the mobile viewport", async ({ page }) => {
   );
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test("bottom tab bar navigates and marks the current section", async ({ page }) => {
+  await page.goto("/");
+  const tabs = page.getByRole("navigation", { name: "Bottom" });
+  await expect(tabs).toBeVisible();
+  await expect(tabs.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
+
+  await tabs.getByRole("link", { name: "Bookmarks" }).click();
+  await expect(page).toHaveURL("/bookmarks");
+  await expect(tabs.getByRole("link", { name: "Bookmarks" })).toHaveAttribute("aria-current", "page");
+  await expect(tabs.getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current", "page");
+});
+
+test("the last content isn't hidden behind the bottom tab bar", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const lastPost = page.getByRole("article").last();
+  const [post, bar] = await Promise.all([
+    lastPost.boundingBox(),
+    page.getByRole("navigation", { name: "Bottom" }).boundingBox(),
+  ]);
+  expect(post.y + post.height).toBeLessThanOrEqual(bar.y);
+});

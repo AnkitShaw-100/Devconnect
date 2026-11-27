@@ -1,9 +1,12 @@
+import Link from "next/link";
 import { Bookmark } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { BookmarkedPosts } from "@/components/feed/bookmarked-posts";
 import { PostCard } from "@/components/feed/post-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { getFeedPosts } from "@/lib/developers";
+import { paths } from "@/lib/paths";
 
 export function BookmarksPage() {
   // Every post is rendered on the server; BookmarkedPosts (client) shows the
@@ -26,7 +29,11 @@ export function BookmarksPage() {
             icon={Bookmark}
             title="No bookmarks yet"
             description="Save posts you want to revisit and they'll show up here."
-          />
+          >
+            <Link href={paths.explore} className={buttonVariants({ size: "sm" })}>
+              Explore posts
+            </Link>
+          </EmptyState>
         }
       />
     </div>

@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import { bookmarkedPostIds } from "@/data/bookmarks";
 import { currentUser } from "@/data/current-user";
+import { focusMainContent, isFocusLost } from "@/lib/a11y";
 import {
   createInitialState,
   interactionsReducer,
@@ -26,7 +27,14 @@ export function InteractionsProvider({ children }) {
     { bookmarkedPostIds },
     createInitialState
   );
-  const value = useMemo(() => ({ state, dispatch }), [state]);
+  // Screen-reader announcements ("Post deleted"). The nonce makes the same
+  // message announce again when it repeats.
+  const [announcement, setAnnouncement] = useState({ text: "", nonce: 0 });
+  const announce = useCallback(
+    (text) => setAnnouncement((current) => ({ text, nonce: current.nonce + 1 })),
+    []
+  );
+  const value = useMemo(() => ({ state, dispatch, announce }), [state, announce]);
 
   // Marks the page as interactive once React has hydrated (clicks before
   // that are lost). End-to-end tests wait for this before interacting.
@@ -34,7 +42,16 @@ export function InteractionsProvider({ children }) {
     document.documentElement.dataset.hydrated = "true";
   }, []);
 
-  return <InteractionsContext.Provider value={value}>{children}</InteractionsContext.Provider>;
+  return (
+    <InteractionsContext.Provider value={value}>
+      {children}
+      {/* The region stays mounted; only its text changes, which screen
+          readers announce reliably. */}
+      <p role="status" aria-live="polite" className="sr-only" data-announcer="">
+        <span key={announcement.nonce}>{announcement.text}</span>
+      </p>
+    </InteractionsContext.Provider>
+  );
 }
 
 function useInteractions() {
@@ -43,8 +60,22 @@ function useInteractions() {
   return context;
 }
 
+// Run after React has removed elements (and any dialog has restored focus):
+// if the focused element disappeared, move focus to the main content.
+function recoverFocusSoon() {
+  requestAnimationFrame(() => {
+    if (isFocusLost()) focusMainContent();
+  });
+}
+
 const newId = (prefix) =>
   `${prefix}-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`}`;
+
+// Announce a short message to screen readers, e.g. after an action that
+// removes the focused element.
+export function useAnnounce() {
+  return useInteractions().announce;
+}
 
 export function useLike(postId, initialLiked, initialCount) {
   const { state, dispatch } = useInteractions();
@@ -63,9 +94,15 @@ export function useFollow(username) {
 }
 
 export function useBookmark(postId) {
-  const { state, dispatch } = useInteractions();
-  const toggle = useCallback(() => dispatch({ type: "toggleBookmark", postId }), [dispatch, postId]);
-  return { bookmarked: selectIsBookmarked(state, postId), toggle };
+  const { state, dispatch, announce } = useInteractions();
+  const bookmarked = selectIsBookmarked(state, postId);
+  const toggle = useCallback(() => {
+    dispatch({ type: "toggleBookmark", postId });
+    announce(bookmarked ? "Removed from bookmarks." : "Saved to bookmarks.");
+    // On the Bookmarks page the card (and the focused button) disappears.
+    recoverFocusSoon();
+  }, [dispatch, announce, postId, bookmarked]);
+  return { bookmarked, toggle };
 }
 
 export function useBookmarks() {
@@ -97,9 +134,9 @@ export function useComments(postId, initialComments) {
 
 // Posts the user wrote this session, newest first.
 export function useCreatedPosts() {
-  const { state, dispatch } = useInteractions();
+  const { state, dispatch, announce } = useInteractions();
   const create = useCallback(
-    ({ content, tags }) => {
+    ({ content, tags, images = [] }) => {
       const post = {
         id: newId("post"),
         authorUsername: currentUser.username,
@@ -107,6 +144,7 @@ export function useCreatedPosts() {
         timestamp: "Just now",
         content,
         tags,
+        images,
         likes: 0,
         likedByMe: false,
         comments: [],
@@ -117,6 +155,13 @@ export function useCreatedPosts() {
     },
     [dispatch]
   );
-  const remove = useCallback((postId) => dispatch({ type: "deletePost", postId }), [dispatch]);
+  const remove = useCallback(
+    (postId) => {
+      dispatch({ type: "deletePost", postId });
+      announce("Post deleted.");
+      recoverFocusSoon();
+    },
+    [dispatch, announce]
+  );
   return { posts: state.createdPosts, create, remove };
 }

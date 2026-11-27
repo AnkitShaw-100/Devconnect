@@ -5,6 +5,7 @@ import { PostMenu } from "@/components/feed/post-menu";
 import { TechTag } from "@/components/shared/tech-tag";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { paths } from "@/lib/paths";
+import { extractHashtags, splitHashtags } from "@/lib/validation";
 
 /*
  * A post is composed of small parts. The static ones (header, body, tags)
@@ -43,13 +44,56 @@ function PostHeader({ post, canDelete }) {
   );
 }
 
-function PostTags({ tags }) {
-  if (!tags.length) return null;
+// Chips for tags that aren't already written as #hashtags in the text.
+function PostTags({ tags, content }) {
+  const inline = new Set(extractHashtags(content).map((tag) => tag.toLowerCase()));
+  const extra = tags.filter((tag) => !inline.has(tag.toLowerCase()));
+  if (!extra.length) return null;
   return (
     <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Technologies">
-      {tags.map((tag) => (
+      {extra.map((tag) => (
         <li key={tag}>
           <TechTag>{tag}</TechTag>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// Post text with #hashtags highlighted.
+function PostText({ content }) {
+  if (!content) return null;
+  return (
+    <p className="text-[15px] leading-relaxed break-words whitespace-pre-line text-foreground">
+      {splitHashtags(content).map((part, index) =>
+        part.tag ? (
+          <span key={index} className="text-brand-soft-foreground">
+            {part.text}
+          </span>
+        ) : (
+          part.text
+        )
+      )}
+    </p>
+  );
+}
+
+// Images attached to a post (posts written in this session; blob: URLs).
+function PostImages({ images }) {
+  if (!images?.length) return null;
+  return (
+    <ul
+      aria-label="Images"
+      className={`mt-3 grid gap-1 overflow-hidden rounded-2xl ring-1 ring-foreground/10 ${images.length > 1 ? "grid-cols-2" : ""}`}
+    >
+      {images.map((image) => (
+        <li key={image.url}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- local blob: URLs can't use next/image */}
+          <img
+            src={image.url}
+            alt={image.alt}
+            className={`w-full object-cover ${images.length > 1 ? "aspect-square" : "max-h-[28rem]"}`}
+          />
         </li>
       ))}
     </ul>
@@ -59,10 +103,9 @@ function PostTags({ tags }) {
 function PostBody({ post }) {
   return (
     <div className="px-4 pt-3 sm:px-5">
-      <p className="text-[15px] leading-relaxed break-words whitespace-pre-line text-foreground">
-        {post.content}
-      </p>
-      <PostTags tags={post.tags} />
+      <PostText content={post.content} />
+      <PostImages images={post.images} />
+      <PostTags tags={post.tags} content={post.content} />
     </div>
   );
 }

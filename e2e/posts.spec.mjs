@@ -4,12 +4,9 @@ const feed = (page) => page.getByRole("region", { name: "Feed" });
 const nav = (page) => page.getByRole("navigation", { name: "Primary" });
 const postBy = (scope, name) => scope.getByRole("article", { name: `Post by ${name}` });
 
-async function writePost(page, content, tags = "") {
+// Hashtags are written inline in the text, as on X.
+async function writePost(page, content) {
   await page.getByRole("textbox", { name: "Write a post" }).fill(content);
-  if (tags) {
-    await page.getByRole("button", { name: "Add tags" }).click();
-    await page.getByRole("textbox", { name: "Tags" }).fill(tags);
-  }
   await page.getByRole("button", { name: "Post", exact: true }).click();
 }
 
@@ -17,12 +14,23 @@ test.describe("create post", () => {
   test("a new post appears first, clears the form and survives navigation", async ({ page }) => {
     await page.goto("/");
     await markDocument(page);
-    await writePost(page, "Learning Server Components today", "React, Next.js");
+    await writePost(page, "Learning Server Components today #React #Nextjs");
 
     const mine = postBy(feed(page), "Jordan Lee");
     await expect(feed(page).getByRole("article").first()).toHaveAccessibleName("Post by Jordan Lee");
     await expect(mine).toContainText("Learning Server Components today");
-    await expect(mine).toContainText("#React");
+    // Inline hashtags are highlighted (brand colour) and not repeated as chips.
+    const hashtag = mine.getByText("#React", { exact: true });
+    await expect(hashtag).toBeVisible();
+    await expect(hashtag).toHaveCSS("color", await mine.evaluate(() => {
+      const probe = document.createElement("span");
+      probe.style.color = "var(--brand-soft-foreground)";
+      document.body.append(probe);
+      const color = getComputedStyle(probe).color;
+      probe.remove();
+      return color;
+    }));
+    await expect(mine.getByRole("list", { name: "Technologies" })).toHaveCount(0);
     await expect(mine).toContainText("Just now");
     await expect(page.getByRole("textbox", { name: "Write a post" })).toHaveValue("");
     await expect(page.getByRole("status").filter({ hasText: "Your post is live" })).toBeAttached();
@@ -41,11 +49,10 @@ test.describe("create post", () => {
     await page.goto("/");
     const content = page.getByRole("textbox", { name: "Write a post" });
 
-    await writePost(page, "Valid text", "good, <bad>");
-    const tags = page.getByRole("textbox", { name: "Tags" });
-    await expect(tags).toHaveAttribute("aria-invalid", "true");
+    await writePost(page, "Too many tags #a #b #c #d #e #f");
+    await expect(content).toHaveAttribute("aria-invalid", "true");
     const form = page.getByRole("form", { name: "Create a post" });
-    await expect(form.getByRole("alert")).toContainText(`"<bad>" isn't a valid tag`);
+    await expect(form.getByRole("alert")).toHaveText("Use at most 5 hashtags.");
     await expect(feed(page).getByRole("article")).toHaveCount(3); // nothing posted
 
     await content.fill("x".repeat(501));
@@ -210,27 +217,83 @@ test.describe("dialogs", () => {
   });
 });
 
-test("composer: tags open from the toolbar, focus shows on the card", async ({ page }) => {
-  await page.goto("/");
-  const form = page.getByRole("form", { name: "Create a post" });
-  await expect(form.getByRole("textbox", { name: "Tags" })).toHaveCount(0);
+// A 1x1 PNG, enough for the browser to treat the file as an image.
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  "base64"
+);
+const file = (name, mimeType = "image/png", buffer = PNG) => ({ name, mimeType, buffer });
 
-  await form.getByRole("button", { name: "Add tags" }).click();
-  const tags = form.getByRole("textbox", { name: "Tags" });
-  await expect(tags).toBeFocused();
-  await expect(form.getByRole("button", { name: "Hide tags" })).toHaveAttribute("aria-expanded", "true");
+test.describe("composer toolbar", () => {
+  test("focus shows on the card and the count appears while typing", async ({ page }) => {
+    await page.goto("/");
+    const form = page.getByRole("form", { name: "Create a post" });
+    // The borderless text box has no ring of its own; the card shows focus.
+    await form.getByRole("textbox", { name: "Write a post" }).focus();
+    const card = page.locator('[data-slot="card"]', { has: form });
+    const ring = await card.evaluate((el) => getComputedStyle(el).getPropertyValue("--tw-ring-color"));
+    expect(ring.trim()).not.toBe("");
+    await expect(form.getByText(/\/500/)).toHaveClass(/sr-only/); // counter hidden until typing
+    await form.getByRole("textbox", { name: "Write a post" }).fill("hi");
+    await expect(form.getByText("2/500")).toBeVisible();
+    // No separate tags control: hashtags are typed in the text.
+    await expect(form.getByRole("button", { name: /tags/i })).toHaveCount(0);
+  });
 
-  // Hiding clears what was typed.
-  await tags.fill("rust");
-  await form.getByRole("button", { name: "Hide tags" }).click();
-  await expect(form.getByRole("textbox", { name: "Tags" })).toHaveCount(0);
+  test("emoji picker inserts at the caret and returns focus", async ({ page }) => {
+    await page.goto("/");
+    const form = page.getByRole("form", { name: "Create a post" });
+    const box = form.getByRole("textbox", { name: "Write a post" });
+    await box.fill("Ship it today");
+    await box.evaluate((el) => el.setSelectionRange(8, 8)); // after "Ship it "
 
-  // The borderless text box has no ring of its own; the card shows focus.
-  await form.getByRole("textbox", { name: "Write a post" }).focus();
-  const card = page.locator('[data-slot="card"]', { has: form });
-  const ring = await card.evaluate((el) => getComputedStyle(el).getPropertyValue("--tw-ring-color"));
-  expect(ring.trim()).not.toBe("");
-  await expect(form.getByText(/\/500/)).toHaveClass(/sr-only/); // counter hidden until typing
-  await form.getByRole("textbox", { name: "Write a post" }).fill("hi");
-  await expect(form.getByText("2/500")).toBeVisible();
+    await form.getByRole("button", { name: "Add emoji" }).click();
+    const picker = page.getByRole("dialog", { name: "Emoji" });
+    await expect(picker).toBeVisible();
+    await picker.getByRole("button", { name: "rocket" }).click();
+
+    await expect(picker).toBeHidden();
+    await expect(box).toHaveValue("Ship it 🚀today");
+    await expect(box).toBeFocused();
+  });
+
+  test("emoji render with the colour emoji font", async ({ page }) => {
+    await page.goto("/");
+    const family = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
+    expect(family).toMatch(/Noto Color Emoji/i);
+  });
+
+  test("images can be attached, previewed, removed and posted on their own", async ({ page }) => {
+    await page.goto("/");
+    const form = page.getByRole("form", { name: "Create a post" });
+    const picker = form.locator('input[type="file"]');
+
+    await picker.setInputFiles([file("one.png"), file("two.png")]);
+    const attached = form.getByRole("list", { name: "Attached images" });
+    await expect(attached.getByRole("img")).toHaveCount(2);
+
+    await form.getByRole("button", { name: "Remove two.png" }).click();
+    await expect(attached.getByRole("img")).toHaveCount(1);
+
+    // An image-only post is allowed.
+    await form.getByRole("button", { name: "Post", exact: true }).click();
+    const mine = postBy(feed(page), "Jordan Lee");
+    await expect(mine.getByRole("list", { name: "Images" }).getByRole("img")).toHaveCount(1);
+    await expect(mine.getByRole("img", { name: /Image shared by Jordan Lee: one\.png/ })).toBeVisible();
+    await expect(form.getByRole("list", { name: "Attached images" })).toHaveCount(0);
+  });
+
+  test("rejects non-images and more than four images", async ({ page }) => {
+    await page.goto("/");
+    const form = page.getByRole("form", { name: "Create a post" });
+    const picker = form.locator('input[type="file"]');
+
+    await picker.setInputFiles([file("notes.txt", "text/plain", Buffer.from("hi"))]);
+    await expect(form.getByRole("alert")).toHaveText(`"notes.txt" isn't an image.`);
+
+    await picker.setInputFiles(["1", "2", "3", "4", "5"].map((n) => file(`${n}.png`)));
+    await expect(form.getByRole("list", { name: "Attached images" }).getByRole("img")).toHaveCount(4);
+    await expect(form.getByRole("alert")).toHaveText("You can attach up to 4 images.");
+    await expect(form.getByRole("button", { name: "Add images" })).toBeDisabled();
+  });
 });

@@ -5,7 +5,17 @@ import { chromium } from "@playwright/test";
 // slowed down by a cold start (on a busy machine, cold first loads took
 // 15-40s and used up the 30s test timeout). Tests still run every page
 // themselves; this only removes start-up cost.
-const routes = ["/", "/explore", "/bookmarks", "/profile", "/developers/priyacodes", "/not-a-page"];
+// Includes an unknown username: those render on request (not prerendered),
+// a slower code path that every not-found test hits on its first visit.
+const routes = [
+  "/",
+  "/explore",
+  "/bookmarks",
+  "/profile",
+  "/developers/priyacodes",
+  "/developers/warm-up-unknown-user",
+  "/not-a-page",
+];
 
 export default async function globalSetup(config) {
   const baseURL = config.projects[0].use.baseURL;

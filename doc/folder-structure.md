@@ -1,6 +1,6 @@
 # DevConnect – `src` Folder Structure
 
-`src` folder ke andar kya hai aur kaunsi file kya karti hai, iska simple guide. (Updated: Milestone 3 — reusable components aur frontend interactions ke baad.)
+`src` folder ke andar kya hai aur kaunsi file kya karti hai, iska simple guide. (Updated: Milestone 4 — UI polish aur accessibility ke baad.)
 
 ## Overall structure
 
@@ -17,7 +17,8 @@ src/
 │   │   └── [username]/page.js → /developers/kuch-bhi-username
 │   ├── not-found.js         → 404 page
 │   ├── loading.js           → Loading skeleton
-│   └── error.js             → Error page
+│   ├── error.js             → Error page (layout ke andar)
+│   └── global-error.js      → Root layout hi fail ho jaaye tab ka error page
 ├── components/              → UI ke saare chhote-bade tukde
 │   ├── providers/           → Shared state: likes, follows, bookmarks, comments, naye posts
 │   ├── layout/              → Navbar, sidebars, nav links, user menu, follow button
@@ -28,7 +29,7 @@ src/
 │   ├── shared/              → Baar-baar use hone wale chhote components
 │   └── ui/                  → shadcn ke components
 ├── data/                    → Dummy data (posts, comments, developers)
-└── lib/                     → Helpers: data, URLs, avatar letter, form validation, interaction store
+└── lib/                     → Helpers: data, URLs, avatar letter, form validation, interaction store, a11y
 
 tests/                       → Unit tests (project root mein)
 e2e/                         → Browser tests, Playwright (project root mein)
@@ -59,6 +60,7 @@ Ek line mein: **`app` ka folder structure hi URL hai, `data` mein content hai, `
 
 - Har page isi ke andar dikhta hai. Isme `<InteractionsProvider>` (shared state) aur `<AppShell>` (navbar, left sidebar, right sidebar) hain.
 - Page badalne pe **layout dobara nahi banta**, sirf beech wala content (`children`) badalta hai. Isliye sidebar ka Follow state navigation ke baad bhi bana rehta hai.
+- Fonts: Geist (text), Geist Mono (code), aur **Noto Color Emoji**, taaki emoji har OS pe ek jaise colorful dikhein (Windows ka default emoji font flat hai). Emoji font pehle se load nahi hota, sirf jab koi emoji dikhe.
 - `<html>` pe `dark` class lagi hai, isliye **poora app by default dark theme** mein hai. `scheme-dark` se browser ke scrollbars aur inputs bhi dark ho jaate hain. Abhi koi theme toggle nahi hai.
 
 ### `app/page.js`, `explore/page.js`, `bookmarks/page.js`, `profile/page.js`
@@ -79,6 +81,14 @@ Chhoti files. Bas `components/pages/` se sahi page component render karti hain.
 
 Jab koi page server pe ban raha ho, tab **sirf beech wale column** mein skeleton dikhta hai; navbar aur sidebars asli rehte hain. Pehle se bane (prerendered) pages pe ye dikhta hi nahi.
 
+### `app/developers/[username]/loading.js`
+
+Profile ki shape wala skeleton (banner, gol avatar, naam, stats), jab koi naya profile server pe ban raha ho.
+
+### `app/global-error.js`
+
+Agar **root layout hi** (navbar, sidebars, provider) fail ho jaaye, toh `error.js` use nahi pakad sakta. Tab ye page aata hai. Ye apna `<html>`, `<body>`, CSS aur dark theme khud lagata hai, aur sirf saade HTML elements use karta hai (agar shared components hi toote hon). Buttons: Try again, Reload page.
+
 ### `app/error.js`
 
 Page banate waqt error aaye toh beech wale column mein "Something went wrong" card, **Try again** aur **Go to home** ke saath. Error ki details sirf console mein jaati hain.
@@ -95,8 +105,9 @@ Global styling: Tailwind, theme colours aur font. Rangon ke liye neeche wala sec
 
 | File | Kya karti hai |
 |---|---|
-| `app-shell.jsx` | 3-column layout: left sidebar, beech mein content, right sidebar. Mobile pe sirf beech wala dikhta hai. `app/layout.js` ise use karta hai. |
-| `nav-link.jsx` | Sidebar/mobile menu ka link. `usePathname()` se current URL padh ke active link **blue highlight** karta hai. (Client Component) |
+| `app-shell.jsx` | 3-column layout: left sidebar, beech mein content, right sidebar. Sabse upar "Skip to main content" link (Tab dabate hi dikhta hai). `<main id="main-content">` pe focus aa sakta hai. Phone pe neeche bottom tab bar ki jagah chhodi jaati hai. |
+| `bottom-nav.jsx` | Phone pe neeche fixed tab bar: Home, Explore, Bookmarks, Profile, current tab highlight. `md` se bade screens pe chhupa rehta hai. |
+| `nav-link.jsx` | Nav ka link, do `variant`: `sidebar` (icon + label ek line mein) aur `tab` (icon ke neeche chhota label, bottom bar). `usePathname()` se active link **blue highlight**. (Client Component) |
 | `navbar.jsx` | Upar ki bar: logo, **beech mein** search, notification bell, avatar. Bade screens pe 3-column grid (`1fr`, search, `1fr`), isliye search hamesha center mein. |
 | `user-menu.jsx` | Navbar avatar ka dropdown: naam, My profile / Bookmarks / Explore links, Settings aur Sign out (disabled, auth abhi nahi). Keyboard se chalta hai. |
 | `logo.jsx` | Blue box wala `</>` icon + "DevConnect" naam (click → Home) |
@@ -114,7 +125,7 @@ Global styling: Tailwind, theme colours aur font. Rangon ke liye neeche wala sec
 
 | File | Kya karti hai |
 |---|---|
-| `post-card.jsx` | Post card, chhote hisson se bana: `PostHeader` (author + "…" menu), `PostBody`, `PostTags`, aur `PostActions`. Khud mein koi hook nahi, isliye server **aur** client dono jagah render ho sakta hai. |
+| `post-card.jsx` | Post card, chhote hisson se bana: `PostHeader` (author + "…" menu), `PostBody` (text mein **#hashtags blue**, images grid), `PostTags` (sirf wo tags jo text mein nahi hain), aur `PostActions`. Khud mein koi hook nahi, isliye server **aur** client dono jagah render ho sakta hai. |
 | `post-actions.jsx` | Post ka interactive hissa (client island): Like, Comments, Bookmark, Share. Comment button comments panel kholta/band karta hai. |
 | `like-button.jsx` ❤️ | Like/unlike. State shared store mein, isliye same post har page pe same dikhta hai. |
 | `bookmark-button.jsx` | Bookmark lagana/hatana; Bookmarks page turant badal jaata hai |
@@ -124,7 +135,8 @@ Global styling: Tailwind, theme colours aur font. Rangon ke liye neeche wala sec
 | `share-dialog.jsx` | Share dialog: post ka link aur Copy button |
 | `report-dialog.jsx` | Report form dialog: reason (radio, zaroori), details ("Something else" pe zaroori) |
 | `delete-post-dialog.jsx` | "Delete this post?" confirm (alert dialog: bahar click karke band nahi hota) |
-| `create-post.jsx` | Post likhne ka asli form, X jaisa: border-less bada text box, neeche toolbar mein `#` button (tags field kholta hai), likhte waqt hi count (max 500), gol Post button. Tags comma se (max 5), validation, `Ctrl+Enter`. Focus card ke ring se dikhta hai. Post feed mein sabse upar aata hai. |
+| `create-post.jsx` | Post likhne ka form, X jaisa: border-less bada text box, neeche toolbar mein **Media** (max 4 images, preview aur hatane ka button) aur **Emoji**, likhte waqt hi count (max 500), gol Post button. Hashtags text mein hi likhte hain (`#React`), wahi post ke tags bante hain (max 5). Sirf image wala post bhi chalta hai. `Ctrl+Enter` se post. Focus card ke ring se dikhta hai. |
+| `emoji-picker.jsx` | Emoji button + popover grid (40 emoji). Cursor ki jagah emoji daalta hai, phir focus wapas text box pe. Har emoji ka naam screen reader ko sunai deta hai. |
 | `new-posts.jsx` | User ke is session ke likhe posts (client), wahi `PostCard` use karke |
 | `bookmarked-posts.jsx` | Bookmarks page pe sirf bookmarked posts dikhata hai (client filter, server-rendered cards) |
 | `post-card-skeleton.jsx` | Loading ke time post card ki jagah grey placeholder |
@@ -136,6 +148,17 @@ Global styling: Tailwind, theme colours aur font. Rangon ke liye neeche wala sec
 | File | Kya karti hai |
 |---|---|
 | `developer-card.jsx` | Chhota developer card: avatar, naam (click → profile), role, top 3 skills, Follow button. Explore page pe grid mein dikhta hai. |
+
+---
+
+## 4b. `components/profile/` aur `components/providers/`
+
+| File | Kya karti hai |
+|---|---|
+| `profile/profile-stats.jsx` | Profile ke inline stats (Following, Followers, Posts). Follow karo toh followers +1, apna post likho toh posts +1. |
+| `profile/profile-posts.jsx` | Server pe bane posts `children` ki tarah leta hai, apne profile pe naye posts upar jodta hai, aur dono khaali hon toh empty state |
+| `profile/profile-skeleton.jsx` | Profile header ki shape ka loading skeleton |
+| `providers/interactions-provider.jsx` | Poore app ka shared state (likes, follows, bookmarks, comments, naye posts) aur screen-reader announcer (`useAnnounce`). Root layout mein hai. |
 
 ---
 
@@ -201,7 +224,8 @@ Milestone 3 mein add kiye (shadcn ke style mein, koi naya package nahi):
 | `paths.js` | Saare URLs ek jagah (`paths.developer("priyacodes")` → `/developers/priyacodes`), aur `isActivePath`, jo batata hai kaunsa nav link active hai |
 | `avatar.js` | `getAvatarLetter(name)`: first name ka pehla letter, capital mein. Details neeche wale section mein. |
 | `interactions.js` | Shared store ka **reducer** (pure function): like, follow, bookmark, comment add, post create/delete. Unit tested. |
-| `validation.js` | Forms ki validation: `validatePost`, `validateComment`, `validateReport`, `parseTags`. Har ek cleaned `values` aur `errors` lautata hai. Backend aane pe server pe bhi yahi checks chalne chahiye. |
+| `validation.js` | Forms ki validation: `validatePost` (text ya image zaroori, hashtags max 5), `validateImages` (sirf images, max 4, 5 MB tak), `validateComment`, `validateReport`. Hashtags ke liye `extractHashtags` aur highlight ke liye `splitHashtags`. Har ek cleaned `values` aur `errors` lautata hai. Backend aane pe server pe bhi yahi checks chalne chahiye. |
+| `a11y.js` | Accessibility helpers: `MAIN_CONTENT_ID`, aur `focusMainContent()` / `isFocusLost()`, jo focused cheez page se hat jaaye (post delete, bookmark hata) toh focus main content pe le aate hain |
 | `format.js` | `formatCount`: `1200` → `1.2K`. `formatNumber`: `1871` → `1,871` (profile stats, taaki follow karne pe +1 dikhe). |
 | `utils.js` | `cn` (CSS classes jodna) aur `idList` (`aria-describedby` ke liye ids jodna) |
 
@@ -216,6 +240,7 @@ Milestone 3 mein add kiye (shadcn ke style mein, koi naya package nahi):
 | `theme.test.mjs` | `globals.css` aur Tailwind ke asli colour values se **WCAG contrast** calculate karta hai: text, tags, blue accent, har component ka focus ring, like/trend colours aur har avatar |
 | `developers.test.mjs` | Data helpers sahi posts, bookmarks, developers aur comments dete hain |
 | `validation.test.mjs` | Post, comment aur report forms ke saare rules: khaali, bahut lamba, galat tags, "Something else" bina details |
+| `design-system.test.mjs` | Design system ke guards: components mein hard-coded neutral/blue rang nahi; custom avatar size ke saath `size="lg"` nahi; `outline-hidden` ke focus outline mein `outline-solid` zaroori; hooks wali file pe `"use client"` |
 | `interactions.test.mjs` | Store reducer: like/unlike, follow, bookmark, comment, apna post banana/delete karna, data ke post delete na ho paana |
 
 Chalane ke liye: `npm test` (Node ka built-in test runner, koi extra package nahi).
@@ -232,9 +257,10 @@ Ye tests asli Chromium browser mein app kholte hain aur user ki tarah click kart
 | `profiles.spec.mjs` | Author, Explore cards aur suggestions se profile khulta hai; encoded username (`meilin%2Edev`); Follow vs Edit profile; "No posts yet" |
 | `not-found.spec.mjs` | Galat URLs pe 404 page + `noindex`, aur 404 page se wapas app mein jaana |
 | `interactions.spec.mjs` | Like button count badhata/ghatata hai, Follow toggle hota hai, Post button text likhne pe hi enable hota hai |
-| `posts.spec.mjs` | Post likhna (validation, `Ctrl+Enter`, profile pe dikhna), apna post delete karna, comments (padhna, likhna, ginti har page pe), likes aur bookmarks pages ke beech sync, Share aur Report dialogs |
+| `posts.spec.mjs` | Post likhna (hashtags highlight, validation, `Ctrl+Enter`, profile pe dikhna), composer ka emoji picker aur images (attach, hatana, sirf image wala post, galat file, 4 se zyada), apna post delete karna, comments (padhna, likhna, ginti har page pe), likes aur bookmarks pages ke beech sync, Share aur Report dialogs |
 | `follow-and-menus.spec.mjs` | Follow har jagah sync aur followers +1, hover pe "Unfollow", account menu aur post menu keyboard se |
-| `mobile.spec.mjs` | Phone size pe sidebars chhupte hain, ☰ menu khulta hai, link click pe page badalta hai aur menu band hota hai |
+| `mobile.spec.mjs` | Phone size pe sidebars chhupte hain, ☰ menu khulta hai, link click pe page badalta hai aur menu band hota hai, bottom tab bar navigate karta hai aur aakhri post uske peeche nahi chhupta |
+| `accessibility.spec.mjs` | Skip link, post delete aur bookmark hatane ke baad focus aur announcement, menu items ka keyboard outline, empty states ke buttons, har button/link ka naam |
 | `theme.spec.mjs` | Dark theme on hai, background aur cards theme tokens se aate hain, inputs ka background sahi token se aata hai, banner pe avatar ka fill solid hai, active link brand colour mein hai, har avatar mein sirf ek letter hai, profile avatar bada (96px+) aur banner pe overlap, navbar search center mein |
 
 Chalane ke liye: `npm run test:e2e`
@@ -305,15 +331,54 @@ Ye kaam ek hi function karta hai, `src/lib/avatar.js` ka `getAvatarLetter(name)`
 
 ---
 
+## 🧩 Design system (ek jaisa UI kaise rehta hai)
+
+**1. Rang:** sirf theme tokens (`bg-card`, `text-muted-foreground`, `bg-brand-soft`...). Saare rang `globals.css` mein. Upar wala "Theme colours" section dekho.
+
+**2. Typography:**
+
+| Cheez | Class |
+|---|---|
+| Page title (h1) | `text-2xl font-semibold tracking-tight` (`PageHeader`) |
+| Profile naam | `text-xl sm:text-2xl font-bold` |
+| Card title | `font-semibold` (`CardTitle`) |
+| Post text / bio | `text-[15px] leading-relaxed` |
+| Meta (username, time) | `text-xs` ya `text-sm` + `text-muted-foreground` |
+
+**3. Shapes aur spacing:** cards `rounded-xl` + `shadow-xs`, card ke andar `px-4 sm:px-5`, cards ke beech `space-y-4`. Buttons: actions ke liye `rounded-full` (Post, Follow, Edit profile), baaki shadcn default.
+
+**4. Reusable components (naya UI banane se pehle yahi use karo):**
+
+| Zaroorat | Component |
+|---|---|
+| Page ka title | `PageHeader` |
+| Kuch dikhane ko nahi | `EmptyState` (icon, title, description, aur aage ka button) |
+| Loading | `PageSkeleton`, `ProfileSkeleton`, `PostCardSkeleton` |
+| Post ka action (like jaisa) | `ActionButton` |
+| Avatar | `UserAvatar` (custom size ke saath `size="lg"` mat do) |
+| Tag | `TechTag` |
+| Confirm | `AlertDialog` |
+
+**5. Accessibility rules:**
+- Har button/link ka naam ho (icon-only pe `aria-label`).
+- Focus hamesha dikhe: solid `ring-ring` / `outline-ring`, kabhi `/50` jaisa faint nahi.
+- Koi cheez hatao jisme focus tha → `focusMainContent()` + `announce()`.
+- Dialogs band hone pe focus wapas trigger pe (`finalFocus`).
+- Errors field se jude: `aria-invalid` + `aria-describedby`.
+
+Ye rules `tests/design-system.test.mjs`, `tests/theme.test.mjs` aur `e2e/accessibility.spec.mjs` mein check hote hain, taaki dobara na tootein.
+
+---
+
 ## Server vs Client Components: simple trick
 
 Jis file ke upar **`"use client"`** likha hai, wo **browser mein chalti hai**, kyunki usme click, state, menu ya current URL ki zaroorat hai:
 
 - `components/providers/interactions-provider.jsx` (shared state)
-- `components/layout/`: `nav-link`, `mobile-nav`, `follow-button`, `user-menu`
-- `components/feed/`: `post-actions`, `like-button`, `bookmark-button`, `comment-form`, `post-menu`, `share-dialog`, `report-dialog`, `delete-post-dialog`, `create-post`, `new-posts`, `bookmarked-posts`
+- `components/layout/`: `nav-link`, `mobile-nav`, `follow-button`, `user-menu` (`bottom-nav` server hai, andar `nav-link` client)
+- `components/feed/`: `emoji-picker`, `post-actions`, `like-button`, `bookmark-button`, `comment-form`, `post-menu`, `share-dialog`, `report-dialog`, `delete-post-dialog`, `create-post`, `new-posts`, `bookmarked-posts`
 - `components/profile/`: `profile-stats`, `profile-posts`
-- `app/error.js` (Next.js mein error page hamesha client pe hota hai)
+- `app/error.js` aur `app/global-error.js` (Next.js mein error pages hamesha client pe hote hain)
 
 Baaki sab **server pe ban ke aati hain**: pages, layout, `PostCard`, header, sidebars, empty states. 🚀
 

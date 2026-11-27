@@ -1,5 +1,6 @@
 import { BriefcaseBusiness, CalendarDays, FileText, MapPin, Pencil } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PostCard } from "@/components/feed/post-card";
 import { FollowButton } from "@/components/layout/follow-button";
@@ -9,6 +10,7 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { ProfilePosts } from "@/components/profile/profile-posts";
 import { ProfileStats } from "@/components/profile/profile-stats";
 import { getDeveloper, getPostsByDeveloper, isCurrentUser } from "@/lib/developers";
+import { paths } from "@/lib/paths";
 
 // Profile header in the familiar social-profile layout: a wide banner, a
 // large avatar overlapping its bottom edge, the main action on the right,
@@ -121,7 +123,13 @@ export function DeveloperProfilePage({ username }) {
                   ? "Share what you're working on and it will show up here."
                   : `${developer.name.split(" ")[0]} hasn't posted anything yet.`
               }
-            />
+            >
+              {isOwnProfile && (
+                <Link href={paths.home} className={buttonVariants({ size: "sm" })}>
+                  Write a post
+                </Link>
+              )}
+            </EmptyState>
           }
         >
           {posts.map((post) => (

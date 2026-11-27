@@ -3,43 +3,80 @@ import assert from "node:assert/strict";
 import {
   LIMITS,
   REPORT_REASONS,
-  parseTags,
+  extractHashtags,
+  splitHashtags,
   validateComment,
+  validateImages,
   validatePost,
   validateReport,
 } from "../src/lib/validation.js";
 
-test("parseTags splits, trims, strips # and dedupes case-insensitively", () => {
-  assert.deepEqual(parseTags("React, next.js,  #react , ,System   Design"), [
-    "React",
-    "next.js",
-    "System Design",
-  ]);
-  assert.deepEqual(parseTags(""), []);
-  assert.deepEqual(parseTags(undefined), []);
+test("hashtags are read from the text, deduped case-insensitively", () => {
+  assert.deepEqual(extractHashtags("Shipping #React and #Next.js. Also #react"), ["React", "Next.js"]);
+  assert.deepEqual(extractHashtags("#C++ and #Objective-C, (#Rust)"), ["C++", "Objective-C", "Rust"]);
+  assert.deepEqual(extractHashtags(""), []);
+  assert.deepEqual(extractHashtags(undefined), []);
 });
 
-test("a valid post is trimmed and its tags parsed", () => {
-  const result = validatePost({ content: "  Shipping today!  ", tags: "Rust, C#, C++" });
+test("a # inside a word, or with no tag after it, is not a hashtag", () => {
+  // C#, issue numbers inside words and URL fragments are not tags.
+  assert.deepEqual(extractHashtags("I write C# daily, see a#b and https://x.dev/#top"), []);
+  assert.deepEqual(extractHashtags("# heading and ## and #"), []);
+  // Markup can't sneak in: only letters, digits and . + # - _ are kept.
+  assert.deepEqual(extractHashtags("#<script>alert(1)</script>"), []);
+});
+
+test("splitHashtags marks the hashtag parts for highlighting", () => {
+  assert.deepEqual(splitHashtags("Hi #React!"), [
+    { text: "Hi " },
+    { text: "#React", tag: "React" },
+    { text: "!" },
+  ]);
+  assert.deepEqual(splitHashtags("no tags"), [{ text: "no tags" }]);
+  // Joining the parts gives back the original text.
+  const content = "Ship #Next.js. Then #Rust";
+  assert.equal(splitHashtags(content).map((part) => part.text).join(""), content);
+});
+
+test("a valid post is trimmed and its hashtags become tags", () => {
+  const result = validatePost({ content: "  Shipping today #Rust #C++  " });
   assert.equal(result.valid, true);
   assert.deepEqual(result.errors, {});
-  assert.deepEqual(result.values, { content: "Shipping today!", tags: ["Rust", "C#", "C++"] });
+  assert.equal(result.values.content, "Shipping today #Rust #C++");
+  assert.deepEqual(result.values.tags, ["Rust", "C++"]);
 });
 
-test("post content is required and length-limited", () => {
-  assert.equal(validatePost({ content: "   " }).errors.content, "Write something before posting.");
+test("a post needs text or an image, within the length limit", () => {
+  assert.equal(
+    validatePost({ content: "   " }).errors.content,
+    "Write something or add an image before posting."
+  );
   assert.equal(validatePost({}).valid, false);
+  assert.equal(validatePost({ content: "", images: [{ url: "blob:x", alt: "" }] }).valid, true);
 
   const max = "x".repeat(LIMITS.postLength);
   assert.equal(validatePost({ content: max }).valid, true);
   assert.match(validatePost({ content: max + "x" }).errors.content, /at most 500/);
 });
 
-test("post tags are limited in number and characters", () => {
-  assert.match(validatePost({ content: "hi", tags: "a,b,c,d,e,f" }).errors.tags, /at most 5/);
-  assert.match(validatePost({ content: "hi", tags: "good, <script>" }).errors.tags, /<script>/);
-  assert.match(validatePost({ content: "hi", tags: "y".repeat(25) }).errors.tags, /isn't a valid tag/);
-  assert.equal(validatePost({ content: "hi", tags: "Objective-C, Node.js" }).valid, true);
+test("hashtags are limited in number and length", () => {
+  assert.match(validatePost({ content: "#a #b #c #d #e #f" }).errors.content, /at most 5 hashtags/);
+  assert.equal(validatePost({ content: "#a #b #c #d #e" }).valid, true);
+  assert.match(validatePost({ content: `#${"y".repeat(25)}` }).errors.content, /too long/);
+});
+
+test("validateImages accepts images up to the count and size limits", () => {
+  const image = (name, size = 1000, type = "image/png") => ({ name, size, type });
+
+  assert.deepEqual(validateImages([image("a.png")]).accepted.map((f) => f.name), ["a.png"]);
+  assert.match(validateImages([image("doc.pdf", 10, "application/pdf")]).error, /isn't an image/);
+  assert.match(validateImages([image("big.png", LIMITS.imageBytes + 1)]).error, /over 5 MB/);
+
+  // Already 3 attached: only one more fits.
+  const result = validateImages([image("1.png"), image("2.png")], 3);
+  assert.deepEqual(result.accepted.map((f) => f.name), ["1.png"]);
+  assert.match(result.error, /up to 4 images/);
+  assert.deepEqual(validateImages(null), { accepted: [], error: null });
 });
 
 test("comments are required and length-limited", () => {

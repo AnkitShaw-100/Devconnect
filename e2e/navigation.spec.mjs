@@ -133,3 +133,8 @@ test("the layout keeps its state across navigations", async ({ page }) => {
     suggestions.getByRole("button", { name: "Unfollow Sofia Martins" })
   ).toBeVisible();
 });
+
+test("the bottom tab bar is only for phones", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("navigation", { name: "Bottom" })).toBeHidden();
+});

@@ -9,22 +9,30 @@ export const LIMITS = {
   reportDetailsLength: 500,
   maxTags: 5,
   tagLength: 24,
+  maxImages: 4,
+  imageBytes: 5 * 1024 * 1024,
 };
-
-// Letters, digits, spaces and the symbols used in tech names
-// (C#, C++, Next.js, Objective-C).
-const TAG_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N} .+#-]*$/u;
 
 const isEmpty = (errors) => Object.keys(errors).length === 0;
 const text = (value) => (typeof value === "string" ? value.trim() : "");
 
-// "React, next.js,  react" -> ["React", "next.js"] (case-insensitive dedupe).
-export function parseTags(raw) {
-  if (typeof raw !== "string") return [];
+// Hashtags are written inline, as on X: "Shipping today #React #Next.js".
+// A tag starts with a letter or digit and may contain . + # - _ (Next.js,
+// C++, C#). "#" right after a letter or digit isn't a tag start (C#), and a
+// trailing "." is sentence punctuation, not part of the tag.
+const HASHTAG = /(^|[^\p{L}\p{N}_&/#])#([\p{L}\p{N}][\p{L}\p{N}_.+#-]*)/gu;
+
+function cleanTag(raw) {
+  return raw.replace(/[.\-]+$/, "");
+}
+
+// Tags written in a post, in order, case-insensitively unique.
+export function extractHashtags(content) {
+  if (typeof content !== "string") return [];
   const seen = new Set();
   const tags = [];
-  for (const part of raw.split(",")) {
-    const tag = part.trim().replace(/^#/, "").replace(/\s+/g, " ");
+  for (const match of content.matchAll(HASHTAG)) {
+    const tag = cleanTag(match[2]);
     const key = tag.toLowerCase();
     if (tag && !seen.has(key)) {
       seen.add(key);
@@ -34,24 +42,62 @@ export function parseTags(raw) {
   return tags;
 }
 
-export function validatePost({ content, tags } = {}) {
-  const values = { content: text(content), tags: parseTags(tags) };
+// Splits post text into plain text and hashtag parts, for highlighting:
+// "Hi #React!" -> [{ text: "Hi " }, { text: "#React", tag: "React" }, { text: "!" }]
+export function splitHashtags(content) {
+  const parts = [];
+  let last = 0;
+  for (const match of content.matchAll(HASHTAG)) {
+    const tag = cleanTag(match[2]);
+    const start = match.index + match[1].length;
+    const end = start + 1 + tag.length;
+    if (start > last) parts.push({ text: content.slice(last, start) });
+    parts.push({ text: content.slice(start, end), tag });
+    last = end;
+  }
+  if (last < content.length) parts.push({ text: content.slice(last) });
+  return parts;
+}
+
+// Checks files picked for a post: images only, size and count limits.
+// `existing` is how many images are already attached.
+export function validateImages(files, existing = 0) {
+  const list = Array.from(files ?? []);
+  const room = Math.max(0, LIMITS.maxImages - existing);
+  const accepted = [];
+  let error = null;
+
+  for (const file of list) {
+    if (!file?.type?.startsWith("image/")) {
+      error = `"${file?.name ?? "That file"}" isn't an image.`;
+    } else if (file.size > LIMITS.imageBytes) {
+      error = `"${file.name}" is over 5 MB.`;
+    } else if (accepted.length >= room) {
+      error = `You can attach up to ${LIMITS.maxImages} images.`;
+    } else {
+      accepted.push(file);
+    }
+  }
+  return { accepted, error };
+}
+
+// A post needs text or at least one image. Tags come from the text.
+export function validatePost({ content, images = [] } = {}) {
+  const values = { content: text(content), tags: extractHashtags(content), images };
   const errors = {};
 
-  if (!values.content) errors.content = "Write something before posting.";
-  else if (values.content.length > LIMITS.postLength) {
+  if (!values.content && images.length === 0) {
+    errors.content = "Write something or add an image before posting.";
+  } else if (values.content.length > LIMITS.postLength) {
     errors.content = `Posts can be at most ${LIMITS.postLength} characters.`;
-  }
-
-  if (values.tags.length > LIMITS.maxTags) {
-    errors.tags = `Use at most ${LIMITS.maxTags} tags.`;
+  } else if (values.tags.length > LIMITS.maxTags) {
+    errors.content = `Use at most ${LIMITS.maxTags} hashtags.`;
   } else {
-    const bad = values.tags.find(
-      (tag) => tag.length > LIMITS.tagLength || !TAG_PATTERN.test(tag)
-    );
-    if (bad) {
-      errors.tags = `"${bad}" isn't a valid tag. Use letters, numbers, spaces and . + # - (max ${LIMITS.tagLength} characters).`;
-    }
+    const long = values.tags.find((tag) => tag.length > LIMITS.tagLength);
+    if (long) errors.content = `#${long} is too long. Hashtags can be at most ${LIMITS.tagLength} characters.`;
+  }
+  if (images.length > LIMITS.maxImages) {
+    errors.images = `You can attach up to ${LIMITS.maxImages} images.`;
   }
 
   return { values, errors, valid: isEmpty(errors) };
